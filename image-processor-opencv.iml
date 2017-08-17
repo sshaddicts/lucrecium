@@ -11,21 +11,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../libs/opencv/opencv/build/java/opencv-320.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <NATIVE>
-          <root url="file://$MODULE_DIR$/../../../libs/opencv/opencv/build/java/x64" />
-        </NATIVE>
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../libs/opencv/opencv/build/java/opencv-320.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.5" level="project" />
     <orderEntry type="library" name="Maven: com.googlecode.efficient-java-matrix-library:ejml:0.25" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: us.ihmc.thirdparty.org.opencv:opencv-java-natives-win64:3.2.0-170503" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: us.ihmc.thirdparty.org.opencv:opencv-java-natives-linux64:3.2.0-170503" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: us.ihmc.thirdparty.org.opencv:opencv-java-natives-osx:3.2.0-170503" level="project" />
   </component>
 </module>
