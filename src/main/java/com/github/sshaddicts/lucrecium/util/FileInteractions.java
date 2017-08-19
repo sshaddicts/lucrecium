@@ -1,6 +1,5 @@
-package com.github.sshaddicts.lucrecium;
+package com.github.sshaddicts.lucrecium.util;
 
-import org.apache.commons.io.FileUtils;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
@@ -11,10 +10,14 @@ import java.util.List;
  */
 public class FileInteractions {
 
-    public static void saveMats(List<Mat> list){
+    public static void saveMats(List<Mat> list) {
         for (Mat mat :
                 list) {
             Imgcodecs.imwrite("testImages/test_" + System.nanoTime() + ".png", mat);
         }
+    }
+
+    public static void saveMat(Mat mat) {
+        Imgcodecs.imwrite("cropped_Images/image_" + System.currentTimeMillis() + ".png", mat);
     }
 }

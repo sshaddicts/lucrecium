@@ -3,3 +3,6 @@ target/
 test_data/
 testImages/
 .idea/
+real_data/
+cropped_images/
+

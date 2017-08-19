@@ -11,7 +11,7 @@ public class Validator {
     public static double MAX_AREA_THRESHOLD;
     public static double ASPECT_RATIO;
 
-    public static boolean isValidTextArea(Rect rect){
+    public static boolean isValidTextArea(Rect rect) {
 
         //check size
         boolean area = (rect.size().area() < MAX_AREA_THRESHOLD);
@@ -22,8 +22,8 @@ public class Validator {
         return area && aspectRatio;
     }
 
-    public static boolean isOverlapping(Rect rect1, Rect rect2){
-        if(rect1.contains(rect2.tl()) || rect1.contains(rect2.br())){
+    public static boolean isOverlapping(Rect rect1, Rect rect2) {
+        if (rect1.contains(rect2.tl()) || rect1.contains(rect2.br())) {
             return true;
         }
         return false;

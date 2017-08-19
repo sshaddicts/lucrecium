@@ -22,8 +22,8 @@ public class ImageProcessor {
     private List<Rect> rois;
     private static int DEFAULT_DISTANCE_THRESHOLD = 5;
 
-    public ImageProcessor(String filename){
-        if(filename == null || Objects.equals(filename, "")){
+    public ImageProcessor(String filename) {
+        if (filename == null || Objects.equals(filename, "")) {
             throw new IllegalArgumentException("Filename cannot be null or empty.");
         }
 
@@ -33,36 +33,31 @@ public class ImageProcessor {
         this.rois = new ArrayList<>();
     }
 
-    public Mat testDrawRoi(){
+    public void drawROI() {
         detectMSER();
-        Mat imagecopy = image.clone();
-        Imgproc.drawContours(imagecopy, regions, 0, new Scalar(10));
-        return imagecopy;
-    }
-
-    public void drawROI(){
-        detectMSER();
-        //Imgproc.drawContours(image, regions, 1, new Scalar(0));
         List<Rect> rects = rect.toList();
 
-        for(Rect rect : rects){
-            if(Validator.isValidTextArea(rect)){
-                //Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(92));
+        for (Rect rect : rects) {
+            if (Validator.isValidTextArea(rect)) {
+
+                rect = fixRect(rect);
+                Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(92));
+
                 rois.add(rect);
             }
         }
     }
 
-    public void resize(double percentage){
+    public void resize(double percentage) {
         double height, width;
         Mat tempMat = new Mat();
-        height = image.height() * (percentage/100);
-        width = image.width() * (percentage/100);
+        height = image.height() * (percentage / 100);
+        width = image.width() * (percentage / 100);
         Imgproc.resize(image, tempMat, new Size(width, height));
         image = tempMat;
     }
 
-    public Mat cropImage(){
+    public Mat cropImage() {
         Mat tempMat = new Mat();
         List<MatOfPoint> countours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -75,9 +70,9 @@ public class ImageProcessor {
 
         for (Mat mat :
                 countours) {
-            if (Imgproc.contourArea(mat)>4000 ){
+            if (Imgproc.contourArea(mat) > 4000) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
-                if(rect.height > 50)
+                if (rect.height > 50)
                     result = image.submat(rect);
             }
         }
@@ -86,7 +81,7 @@ public class ImageProcessor {
     }
 
     //TODO rewrite using FeatureDetector
-    public void detectMSER(){
+    public void detectMSER() {
         Mat tempMat = image.clone();
         Imgproc.blur(image, tempMat, new Size(image.width(), image.height()));
         MSER mser = MSER.create(5,
@@ -101,7 +96,7 @@ public class ImageProcessor {
         mser.detectRegions(image, regions, rect);
     }
 
-    public List<MatOfPoint> getRegions(){
+    public List<MatOfPoint> getRegions() {
         return regions;
     }
 
@@ -109,15 +104,24 @@ public class ImageProcessor {
         return image;
     }
 
-    public List<Mat> getMats(){
+    public List<Mat> getMats() {
         List<Mat> returnList = new ArrayList<>();
 
-        for (Rect rectang:
-             rois) {
+        for (Rect rectang :
+                rois) {
             returnList.add(image.submat(rectang));
         }
 
         return returnList;
+    }
+
+    private Rect fixRect(Rect rect) {
+        rect.tl().x -= 5;
+        rect.tl().y -= 5;
+
+        rect.br().x += 5;
+        rect.br().y += 5;
+        return rect;
     }
 
 }

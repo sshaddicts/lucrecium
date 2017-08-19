@@ -1,10 +1,11 @@
 package com.github.sshaddicts.lucrecium;
 
 import com.github.sshaddicts.lucrecium.neuralNetwork.NeuralClassifier;
-import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.util.MatrixOperations;
 import org.ejml.simple.SimpleMatrix;
 import org.opencv.core.Core;
+
+import java.util.Random;
 
 /**
  * Created by Alex on 02.08.2017.
@@ -26,56 +27,57 @@ public class NeuralNetworkRunner {
 
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-        testOnImages();
 
-    }
-    public static void testOnXOR(){
-        double[][] inputSet = new double[][]{
-                {0,0},
-                {1,0},
-                {0,1},
-                {1,1}
-        };
-
-        double[] outputSet = new double[]{
-                0,
-                1,
-                1,
-                0
-        };
-
-        NeuralClassifier classifier = new NeuralClassifier(2,1,1,1);
-
-        classifier.computeGradient(MatrixOperations.createVectorFrom(new double[]{0,1}), MatrixOperations.createVectorFrom(new double[]{1}));
-
-
+        demoTest();
+        //testOnXOR();
+        //testOnImages();
     }
 
+    public static void demoTest() {
+        NeuralClassifier classifier = new NeuralClassifier(2, 1, 2, 1);
+        SimpleMatrix[] inputData = new SimpleMatrix[]{
+                MatrixOperations.createVectorFrom(new double[]{0, 0}),
+                MatrixOperations.createVectorFrom(new double[]{0, 1}),
+                MatrixOperations.createVectorFrom(new double[]{1, 0}),
+                MatrixOperations.createVectorFrom(new double[]{1, 1})
+        };
 
-    public static void testOnImages(){
+        SimpleMatrix[] outputData = new SimpleMatrix[]{
+                MatrixOperations.createVectorFrom(new double[]{0}),
+                MatrixOperations.createVectorFrom(new double[]{1}),
+                MatrixOperations.createVectorFrom(new double[]{1}),
+                MatrixOperations.createVectorFrom(new double[]{0})
+        };
 
-        ImageProcessor testImage = new ImageProcessor(files[7]);
+        Random random = new Random();
 
-        testImage.resize(20);
-
-        byte[] imageData = new byte[testImage.getImage().width() * testImage.getImage().height()];
-        testImage.getImage().get(0,0,imageData);
-        SimpleMatrix matrixFromMat = MatrixOperations.createVectorFrom(imageData);
-
-        double[] outputdata = new double[]{1, 0, 0};
-
-        NeuralClassifier recognizer = new NeuralClassifier(
-                testImage.getImage().height() * testImage.getImage().width(),
-                3,
-                5,
-                3);
-
-        SimpleMatrix[] gradient = recognizer.computeGradient(matrixFromMat, MatrixOperations.createVectorFrom(outputdata));
-
-        for (int i = 0; i< gradient.length; i++) {
-            if(gradient[i] != null )gradient[i].print();
+        for (int i = 0; i < 3000; i++) {
+            int randomNumber = random.nextInt(4);
+            classifier.train(inputData[randomNumber], outputData[randomNumber]);
         }
 
-        recognizer.backPropagate();
+        xorErrorForClassifier(classifier);
+        xorHypothesisForClassifier(classifier);
+    }
+
+    public static void xorErrorForClassifier(NeuralClassifier classifier) {
+        double a, b, c, d;
+
+        a = classifier.costFunction(MatrixOperations.createVectorFrom(new double[]{0, 0}), MatrixOperations.createVectorFrom(new double[]{0}));
+        b = classifier.costFunction(MatrixOperations.createVectorFrom(new double[]{1, 0}), MatrixOperations.createVectorFrom(new double[]{1}));
+        c = classifier.costFunction(MatrixOperations.createVectorFrom(new double[]{0, 1}), MatrixOperations.createVectorFrom(new double[]{1}));
+        d = classifier.costFunction(MatrixOperations.createVectorFrom(new double[]{1, 1}), MatrixOperations.createVectorFrom(new double[]{0}));
+
+        System.out.println("0, 0 -> " + a);
+        System.out.println("1, 0 -> " + b);
+        System.out.println("0, 1 -> " + c);
+        System.out.println("1, 1 -> " + d);
+    }
+
+    public static void xorHypothesisForClassifier(NeuralClassifier classifier) {
+        classifier.hypothesis(MatrixOperations.createVectorFrom(new double[]{0, 0})).print();
+        classifier.hypothesis(MatrixOperations.createVectorFrom(new double[]{1, 0})).print();
+        classifier.hypothesis(MatrixOperations.createVectorFrom(new double[]{0, 1})).print();
+        classifier.hypothesis(MatrixOperations.createVectorFrom(new double[]{1, 1})).print();
     }
 }
