@@ -20,4 +20,8 @@ public class FileInteractions {
     public static void saveMat(Mat mat) {
         Imgcodecs.imwrite("cropped_Images/image_" + System.currentTimeMillis() + ".png", mat);
     }
+
+    public static void saveMatTo(Mat mat, String filename){
+        Imgcodecs.imwrite(filename, mat);
+    }
 }

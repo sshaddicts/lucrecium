@@ -23,6 +23,8 @@ public class Validator {
     }
 
     public static boolean isOverlapping(Rect rect1, Rect rect2) {
+        if(rect1 == rect2)
+            return true;
         if (rect1.contains(rect2.tl()) || rect1.contains(rect2.br())) {
             return true;
         }
