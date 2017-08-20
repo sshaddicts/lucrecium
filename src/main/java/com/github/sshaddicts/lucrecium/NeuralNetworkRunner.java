@@ -3,6 +3,7 @@ package com.github.sshaddicts.lucrecium;
 import com.github.sshaddicts.lucrecium.neuralNetwork.NeuralClassifier;
 import com.github.sshaddicts.lucrecium.util.MatrixOperations;
 import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.jcublas.compression.CudaThreshold;
 import org.opencv.core.Core;
 
 import java.util.Random;
@@ -24,13 +25,11 @@ public class NeuralNetworkRunner {
 
 
     public static void main(String[] args) {
-
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
 
+
         demoTest();
-        //testOnXOR();
-        //testOnImages();
     }
 
     public static void demoTest() {

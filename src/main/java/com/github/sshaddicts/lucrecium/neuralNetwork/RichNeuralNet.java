@@ -1,5 +1,6 @@
 package com.github.sshaddicts.lucrecium.neuralNetwork;
 
+import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -36,6 +37,9 @@ public class RichNeuralNet {
 
     public MultiLayerNetwork getNet() {
         return network;
+    }
+
+    public void addLayer(Layer layer){
     }
 
     public void init(int inputSize, int hiddenNumber, int hiddenSize, int classNumber) {

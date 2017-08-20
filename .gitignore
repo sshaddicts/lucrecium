@@ -6,4 +6,6 @@ testImages/
 real_data/
 cropped_images/
 mser_data/
+util/
+*.iml
 
