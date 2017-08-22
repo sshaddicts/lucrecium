@@ -1,51 +1,75 @@
 package com.github.sshaddicts.lucrecium;
 
 import com.github.sshaddicts.lucrecium.datasets.DummyDataSet;
+import com.github.sshaddicts.lucrecium.datasets.ImageDataSet;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessingException;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
-import com.github.sshaddicts.lucrecium.imageProcessing.Imshow;
 import com.github.sshaddicts.lucrecium.imageProcessing.Validator;
+import com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet;
 import com.github.sshaddicts.lucrecium.util.FileInteractions;
+import org.nd4j.jita.conf.CudaEnvironment;
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
 
 
-public class ImageProcessingRunner {
+public class lucreciumRunner {
 
     public static int PICTURE_NUMBER = 0;
 
     public static void main(String[] args) {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
+        int classNumber = 2;
+
         Validator.MIN_AREA_THRESHOLD = 5;
         Validator.MAX_AREA_THRESHOLD = 1000;
         Validator.ASPECT_RATIO = 2 / 1;
 
-        ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[PICTURE_NUMBER]);
+        ImageDataSet dataSet = new ImageDataSet("testingData", classNumber);
 
-        processor.delta = 0;
-        processor.minArea = 25;
-        processor.maxArea = Integer.MAX_VALUE;
-        processor.maxVariation = Integer.MAX_VALUE;
-        processor.minDiversity = 5;
-        processor.maxEvolution = 5;
-        processor.areaThreshold = 5000;
-        processor.minMargin = 5;
-        processor.edgeBlurSize = 0;
-
-        try {
-            processor.preProcess();
-        } catch (ImageProcessingException e) {
-            System.out.println(e.getInfo());
+        RichNeuralNet net = new RichNeuralNet();
+        net.init(18*9, 5, 30, classNumber);
+        //net.init(18,9);
+        while(dataSet.hasNext()){
+            net.setData(dataSet.next());
+            net.train();
+            net.eval();
         }
-        processor.drawROI();
 
-        Imshow shower = new Imshow("test");
-        shower.showImage(processor.getImage());
+    }
 
-        FileInteractions.saveMats(processor.getMats());
+    public static void createCharacterDataSet(){
+        int length = DummyDataSet.realData.length;
+
+        for (int i = 0; i <length; i++) {
+
+            System.out.println(i);
+
+            ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[3]);
+
+            processor.delta = 0;
+            processor.minArea = 25;
+            processor.maxArea = Integer.MAX_VALUE;
+            processor.maxVariation = Integer.MAX_VALUE;
+            processor.minDiversity = 5;
+            processor.maxEvolution = 5;
+            processor.areaThreshold = 5000;
+            processor.minMargin = 5;
+            processor.edgeBlurSize = 0;
+
+            try {
+                processor.preProcess();
+            } catch (ImageProcessingException e) {
+                System.out.println(e.getInfo());
+            }
+            processor.drawROI();
+
+            FileInteractions.saveMats(processor.getMats());
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static void saveCroppedImage() throws ImageProcessingException {
@@ -54,8 +78,7 @@ public class ImageProcessingRunner {
         processor.save("file_" + System.currentTimeMillis() + ".png");
     }
 
-
-    public static void saveProcessorInfo(ImageProcessor processor){
+    public static void saveProcessorInfo(ImageProcessor processor) {
         FileInteractions.saveMatTo(processor.getImage(), String.format(
                 "mser_data/picture = %d; delta = %d;" +
                         "minArea = %d;" +
