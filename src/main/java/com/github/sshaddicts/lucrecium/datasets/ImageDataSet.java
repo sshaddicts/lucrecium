@@ -25,7 +25,7 @@ public class ImageDataSet {
 
     DataSetIterator iterator;
 
-    private int batchSize = 10;
+    private int batchSize = 20;
     private int numberOfClasses = 76;
 
     public ImageDataSet(String parentDir, int classNumber) {
@@ -64,6 +64,10 @@ public class ImageDataSet {
 
     public boolean hasNext(){
         return iterator.hasNext();
+    }
+
+    public void resetIterator(){
+        iterator.reset();
     }
 
 }

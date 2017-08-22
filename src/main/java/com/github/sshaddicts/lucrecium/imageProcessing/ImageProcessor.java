@@ -37,6 +37,8 @@ public class ImageProcessor {
 
     public double resizeRate = 0.3;
 
+    int roisize = 0;
+
     public ImageProcessor(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
             throw new IllegalArgumentException("Filename cannot be null or empty.");
@@ -85,7 +87,7 @@ public class ImageProcessor {
                 countours) {
             if (Imgproc.contourArea(mat) > image.rows() * image.cols() / 4) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
-                rect = fixRect(rect, 50);
+                //rect = fixRect(rect, 50);
                 if (rect.height > 50)
                     result = image.submat(rect);
             }
@@ -123,14 +125,16 @@ public class ImageProcessor {
         detectMSER();
         List<Rect> rects = rect.toList();
 
-        for (Iterator<Rect> iterator = rects.listIterator(); iterator.hasNext(); ) {
-            Rect current = iterator.next();
+        for (int i = 0; i < rects.size(); i++) {
 
-            if (Validator.isValidTextArea(current)) {
-                current = fixRect(current, DEFAULT_REGION_PADDING);
+            Rect rect = rects.get(i);
+
+            if (Validator.isValidTextArea(rect)) {
+                rect = fixRect(rect, DEFAULT_REGION_PADDING);
                 //Imgproc.rectangle(image, current.tl(), current.br(), new Scalar(92));
 
-                rois.add(current);
+                rois.add(rect);
+                roisize++;
             }
         }
     }
@@ -151,10 +155,12 @@ public class ImageProcessor {
 
         Size outputSize = new Size(9, 18);
 
-        for (Rect rectang :
-                rois) {
-            source = image.submat(rectang);
+        for (int i = 0; i < rois.size(); i++) {
+            Rect rect = rois.get(i);
+
             Mat temp = new Mat();
+            source = image.submat(rect);
+
 
             Imgproc.resize(source, temp, outputSize);
 
@@ -170,12 +176,13 @@ public class ImageProcessor {
         int lowX = rect.x - padding;
         int lowY = rect.y - padding;
 
-        int highX = rect.x + rect.width + (padding * 2);
-        int highY = rect.y + rect.height + (padding * 2);
+        int highX = rect.width + (padding * 2);
+        int highY = rect.height + (padding * 2);
 
         return new Rect(lowX <= 0 ? 0 : lowX, lowY <= 0 ? 0 : lowY,
-                highX > image.cols() ? image.cols() : highX - rect.x,
-                highY > image.rows() ? image.rows() : highY - rect.y);
+                rect.x + highX > image.cols() -2 ? image.cols() - 2 : highX,
+                rect.y + highY > image.rows() -2 ? image.rows() - 2 : highY);
+
     }
 
     public boolean save(String filename) {

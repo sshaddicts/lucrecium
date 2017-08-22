@@ -11,6 +11,7 @@ public class Validator {
     public static double MAX_AREA_THRESHOLD;
     public static double MIN_AREA_THRESHOLD;
     public static double ASPECT_RATIO;
+    public static double MIN_ASPECT_RATIO;
 
     public static boolean isValidTextArea(Rect rect) {
 
@@ -19,7 +20,9 @@ public class Validator {
         boolean biggerThanMinimum = rect.size().area() > MIN_AREA_THRESHOLD;
 
         //check aspect ratio
-        boolean aspectRatio = (rect.height / rect.width) < ASPECT_RATIO;
+
+        double realRatio = rect.height / rect.width;
+        boolean aspectRatio = realRatio < ASPECT_RATIO && realRatio > ASPECT_RATIO;
 
         return lessThanMaximum && biggerThanMinimum && aspectRatio;
     }

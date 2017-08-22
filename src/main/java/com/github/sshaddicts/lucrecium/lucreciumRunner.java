@@ -7,42 +7,79 @@ import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.imageProcessing.Validator;
 import com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet;
 import com.github.sshaddicts.lucrecium.util.FileInteractions;
-import org.nd4j.jita.conf.CudaEnvironment;
+import org.apache.commons.io.FileUtils;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.util.ModelSerializer;
 import org.opencv.core.Core;
+
+import java.awt.*;
+import java.io.IOException;
 
 
 public class lucreciumRunner {
 
     public static int PICTURE_NUMBER = 0;
+    public static int CLASS_NUMBER = 10;
+
+    public static String NETWORK_DATA_DIR = "simple_data";
 
     public static void main(String[] args) {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-        int classNumber = 2;
 
         Validator.MIN_AREA_THRESHOLD = 5;
         Validator.MAX_AREA_THRESHOLD = 1000;
         Validator.ASPECT_RATIO = 2 / 1;
 
-        ImageDataSet dataSet = new ImageDataSet("testingData", classNumber);
+        createCharacterDataSet();
+    }
+
+    public static void testNetwork(){
+        ImageDataSet dataSet = new ImageDataSet(NETWORK_DATA_DIR, CLASS_NUMBER);
 
         RichNeuralNet net = new RichNeuralNet();
-        net.init(18*9, 5, 30, classNumber);
+        net.init(18 * 9, 5, 30, CLASS_NUMBER);
+
         //net.init(18,9);
-        while(dataSet.hasNext()){
-            net.setData(dataSet.next());
-            net.train();
-            net.eval();
+        for (int i = 0; i < 10000; i++) {
+            while (dataSet.hasNext()) {
+                net.setData(dataSet.next());
+                net.train();
+            }
         }
+
+        Toolkit.getDefaultToolkit().beep();
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Toolkit.getDefaultToolkit().beep();
+
+        saveNetwork(net.getNet(), "netFile");
+    }
+
+    public static void saveNetwork(MultiLayerNetwork net, String filename) {
+        try {
+            ModelSerializer.writeModel(net, filename, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static MultiLayerNetwork loadNetwork(String filename) throws IOException {
+
+        MultiLayerNetwork multiLayerNetwork = ModelSerializer.restoreMultiLayerNetwork(filename);
+
+        return multiLayerNetwork;
 
     }
 
-    public static void createCharacterDataSet(){
+    public static void createCharacterDataSet() {
         int length = DummyDataSet.realData.length;
 
-        for (int i = 0; i <length; i++) {
-
-            System.out.println(i);
+        for (int i = 0; i < length; i++) {
 
             ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[3]);
 
@@ -69,6 +106,8 @@ public class lucreciumRunner {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            System.out.println(i);
         }
     }
 

@@ -18,8 +18,8 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class RichNeuralNet {
-    private int ITERATIONS = 50000;
-    private double LEARNING_RATE = 0.01;
+    private int ITERATIONS = 10000;
+    private double LEARNING_RATE = 0.001;
 
     private boolean USE_DROP_CONNECT = false;
     private boolean MINI_BATCH = false;
@@ -109,8 +109,17 @@ public class RichNeuralNet {
         network = new MultiLayerNetwork(conf);
     }
 
+    public void init(MultiLayerNetwork net){
+        this.network = net;
+    }
+
     public void train() {
         network.fit(data);
+        INDArray output = network.output(data.getFeatureMatrix());
+        Evaluation eval = new Evaluation(classNumber);
+        eval.eval(data.getLabels(), output);
+
+        System.out.println(eval.stats());
     }
 
     private DenseLayer configureLayer(int nIn, int nOut) {
