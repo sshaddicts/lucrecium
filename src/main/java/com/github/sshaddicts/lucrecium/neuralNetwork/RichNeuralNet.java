@@ -3,19 +3,22 @@ package com.github.sshaddicts.lucrecium.neuralNetwork;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.LearningRatePolicy;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
 import org.deeplearning4j.nn.conf.inputs.InputType;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.OutputLayer;
-import org.deeplearning4j.nn.conf.layers.RBM;
+import org.deeplearning4j.nn.conf.layers.*;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RichNeuralNet {
     private int ITERATIONS = 10000;
@@ -38,7 +41,7 @@ public class RichNeuralNet {
     MultiLayerNetwork network;
 
     private int layers = 0;
-    private int classNumber;
+    private int classNumber = 2;
 
     public MultiLayerNetwork getNet() {
         return network;
@@ -85,6 +88,7 @@ public class RichNeuralNet {
 
         multilayerConf = listBuilder.build();
         network = new MultiLayerNetwork(multilayerConf);
+        network.init();
     }
 
     public void init(int numRows, int numColumns){
@@ -107,10 +111,59 @@ public class RichNeuralNet {
                 .build();
 
         network = new MultiLayerNetwork(conf);
+        network.init();
     }
 
     public void init(MultiLayerNetwork net){
         this.network = net;
+    }
+
+    public void init(){
+        // learning rate schedule in the form of <Iteration #, Learning Rate>
+        Map<Integer, Double> lrSchedule = new HashMap<>();
+        lrSchedule.put(0, 0.01);
+        lrSchedule.put(1000, 0.005);
+        lrSchedule.put(3000, 0.001);
+
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(123)
+                .iterations(ITERATIONS)
+                .regularization(true).l2(0.0005)
+                .learningRate(.01)
+
+                .weightInit(WeightInit.XAVIER)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .updater(Updater.NESTEROVS)
+                .list()
+                .layer(0, new ConvolutionLayer.Builder(4, 2)
+                        .nIn(1)
+                        .stride(1, 1)
+                        .nOut(20)
+                        .activation(Activation.IDENTITY)
+                        .build())
+                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2,2)
+                        .stride(2,2)
+                        .build())
+                .layer(2, new ConvolutionLayer.Builder(4, 2)
+                        .stride(1, 1)
+                        .nOut(50)
+                        .activation(Activation.IDENTITY)
+                        .build())
+                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2,2)
+                        .stride(2,2)
+                        .build())
+                .layer(4, new DenseLayer.Builder().activation(Activation.RELU)
+                        .nOut(500).build())
+                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .nOut(classNumber)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .setInputType(InputType.convolutionalFlat(18,9,1))
+                .backprop(true).pretrain(false).build();
+            network = new MultiLayerNetwork(conf);
+            network.init();
     }
 
     public void train() {
