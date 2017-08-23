@@ -8,23 +8,36 @@ import org.opencv.core.Rect;
  */
 public class Validator {
 
-    public static double MAX_AREA_THRESHOLD;
-    public static double MIN_AREA_THRESHOLD;
-    public static double ASPECT_RATIO;
-    public static double MIN_ASPECT_RATIO;
+    public static double MAX_AREA_THRESHOLD = 1000;
+    public static double MIN_AREA_THRESHOLD = 25;
+    public static double ASPECT_RATIO = 2/1;
+    public static double MIN_ASPECT_RATIO = 1;
+
+    private static Rect RECT;
+    private static int height;
+
 
     public static boolean isValidTextArea(Rect rect) {
 
+
+        RECT = rect;
+        height = rect.height;
+
+        if(rect.height == 0 || rect.width == 0 )
+            return false;
+
+
+        //check if height is no bigger than the area
+
         //check size
-        boolean lessThanMaximum = rect.size().area() < MAX_AREA_THRESHOLD;
-        boolean biggerThanMinimum = rect.size().area() > MIN_AREA_THRESHOLD;
+        double area = rect.size().area();
+        boolean isOkArea = MIN_AREA_THRESHOLD < area && area < MAX_AREA_THRESHOLD;
 
         //check aspect ratio
-
         double realRatio = rect.height / rect.width;
-        boolean aspectRatio = realRatio < ASPECT_RATIO && realRatio > ASPECT_RATIO;
+        boolean aspectRatio = realRatio < ASPECT_RATIO;
 
-        return lessThanMaximum && biggerThanMinimum && aspectRatio;
+        return isOkArea && aspectRatio;
     }
 
     public static boolean isOverlapping(Rect rect1, Rect rect2) {

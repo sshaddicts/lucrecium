@@ -5,6 +5,7 @@ import org.opencv.core.*;
 import org.opencv.features2d.MSER;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -72,7 +73,7 @@ public class ImageProcessor {
         image = tempMat;
     }
 
-    private void cropImage() throws CvException {
+    private void cropImage() {
         Mat tempMat = new Mat();
         List<MatOfPoint> countours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -87,7 +88,6 @@ public class ImageProcessor {
                 countours) {
             if (Imgproc.contourArea(mat) > image.rows() * image.cols() / 4) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
-                //rect = fixRect(rect, 50);
                 if (rect.height > 50)
                     result = image.submat(rect);
             }
@@ -96,16 +96,11 @@ public class ImageProcessor {
         image = result;
     }
 
-    public void preProcess() throws ImageProcessingException {
+    public void preProcess(){
         blur();
-        try {
-            cropImage();
-        } catch (CvException e) {
-            throw new ImageProcessingException("The cropped image was either too large or too small");
-        }
+        cropImage();
         resize();
         threshold();
-
     }
 
     private void detectMSER() {
@@ -121,7 +116,7 @@ public class ImageProcessor {
         mser.detectRegions(image, regions, rect);
     }
 
-    public void drawROI() {
+    private void drawROI() {
         detectMSER();
         List<Rect> rects = rect.toList();
 
@@ -131,7 +126,7 @@ public class ImageProcessor {
 
             if (Validator.isValidTextArea(rect)) {
                 rect = fixRect(rect, DEFAULT_REGION_PADDING);
-                //Imgproc.rectangle(image, current.tl(), current.br(), new Scalar(92));
+                //Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(92));
 
                 rois.add(rect);
                 roisize++;
@@ -147,6 +142,12 @@ public class ImageProcessor {
         return image;
     }
 
+    public List<Mat> getText(){
+        preProcess();
+        drawROI();
+        return getMats();
+    }
+
     //TODO add built-in resizing
     public List<Mat> getMats() {
         List<Mat> returnList = new ArrayList<>();
@@ -160,7 +161,6 @@ public class ImageProcessor {
 
             Mat temp = new Mat();
             source = image.submat(rect);
-
 
             Imgproc.resize(source, temp, outputSize);
 
@@ -180,8 +180,8 @@ public class ImageProcessor {
         int highY = rect.height + (padding * 2);
 
         return new Rect(lowX <= 0 ? 0 : lowX, lowY <= 0 ? 0 : lowY,
-                rect.x + highX > image.cols() -2 ? image.cols() - 2 : highX,
-                rect.y + highY > image.rows() -2 ? image.rows() - 2 : highY);
+                rect.x + highX > image.cols() -2 ? rect.width: highX,
+                rect.y + highY > image.rows() -2 ? rect.height: highY);
 
     }
 

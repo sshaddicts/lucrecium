@@ -4,6 +4,7 @@ import com.github.sshaddicts.lucrecium.datasets.DummyDataSet;
 import com.github.sshaddicts.lucrecium.datasets.ImageDataSet;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessingException;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
+import com.github.sshaddicts.lucrecium.imageProcessing.Imshow;
 import com.github.sshaddicts.lucrecium.imageProcessing.Validator;
 import com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet;
 import com.github.sshaddicts.lucrecium.util.FileInteractions;
@@ -26,10 +27,10 @@ public class lucreciumRunner {
     public static void main(String[] args) {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-
         Validator.MIN_AREA_THRESHOLD = 5;
         Validator.MAX_AREA_THRESHOLD = 1000;
         Validator.ASPECT_RATIO = 2 / 1;
+        Validator.MIN_ASPECT_RATIO = 1/2;
 
         createCharacterDataSet();
     }
@@ -81,11 +82,11 @@ public class lucreciumRunner {
 
         for (int i = 0; i < length; i++) {
 
-            ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[3]);
+            ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[i]);
 
             processor.delta = 0;
             processor.minArea = 25;
-            processor.maxArea = Integer.MAX_VALUE;
+            processor.maxArea = 21*852;
             processor.maxVariation = Integer.MAX_VALUE;
             processor.minDiversity = 5;
             processor.maxEvolution = 5;
@@ -93,14 +94,8 @@ public class lucreciumRunner {
             processor.minMargin = 5;
             processor.edgeBlurSize = 0;
 
-            try {
-                processor.preProcess();
-            } catch (ImageProcessingException e) {
-                System.out.println(e.getInfo());
-            }
-            processor.drawROI();
 
-            FileInteractions.saveMats(processor.getMats());
+            FileInteractions.saveMats(processor.getText());
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
