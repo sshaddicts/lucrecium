@@ -76,6 +76,7 @@ public class Imshow {
             // InputStream in = new ByteArrayInputStream(byteArray);
             // bufImage = ImageIO.read(in);
             bufImage = toBufferedImage(img);
+
             image.setImage(bufImage);
             Window.pack();
             label.updateUI();
@@ -94,15 +95,32 @@ public class Imshow {
             type = BufferedImage.TYPE_3BYTE_BGR;
         }
         int bufferSize = m.channels() * m.cols() * m.rows();
-        byte[] b = new byte[bufferSize];
-        m.get(0, 0, b); // get all the pixels
-        BufferedImage image = new BufferedImage(m.cols(), m.rows(), type);
-        final byte[] targetPixels = ((DataBufferByte) image.getRaster()
-                .getDataBuffer()).getData();
-        System.arraycopy(b, 0, targetPixels, 0, b.length);
-        return image;
 
+        BufferedImage image = new BufferedImage(m.cols(), m.rows(), type);
+
+        if (m.type() == 4) {
+            int[] b = new int[bufferSize];
+            m.get(0, 0, b); // get all the pixels
+
+            final byte[] target = ((DataBufferByte) image.getRaster()
+                    .getDataBuffer()).getData();
+            int[] targetPixels = new int[target.length];
+            for (int i = 0; i < target.length; i++) {
+                targetPixels[i] = target[i];
+            }
+
+            System.arraycopy(b, 0, targetPixels, 0, b.length);
+        } else {
+            byte[] b = new byte[bufferSize];
+            m.get(0, 0, b); // get all the pixels
+            final byte[] targetPixels = ((DataBufferByte) image.getRaster()
+                    .getDataBuffer()).getData();
+            System.arraycopy(b, 0, targetPixels, 0, b.length);
+        }
+
+        return image;
     }
+
 
     // Thanks to sutr90 for reporting the issue : https://github.com/sutr90
 

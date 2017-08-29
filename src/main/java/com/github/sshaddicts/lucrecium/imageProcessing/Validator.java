@@ -31,7 +31,7 @@ public class Validator {
 
         //check size
         double area = rect.size().area();
-        boolean isOkArea = MIN_AREA_THRESHOLD < area && area < MAX_AREA_THRESHOLD;
+        boolean isOkArea = area < MAX_AREA_THRESHOLD;
 
         //check aspect ratio
         double realRatio = rect.height / rect.width;

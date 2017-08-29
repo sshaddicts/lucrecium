@@ -13,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-public class ImageDataSet {
+public class ImageDataSet{
 
     ImageRecordReader recordReader;
     FileSplit fileSplit;
@@ -28,7 +28,7 @@ public class ImageDataSet {
     private int batchSize = 20;
     private int numberOfClasses = 76;
 
-    public ImageDataSet(String parentDir, int classNumber) {
+    public ImageDataSet(String parentDir, int classNumber, int batchSize) {
         File parentDirectory = new File(parentDir);
 
         String[] allowedExtensions = new String[]{".png", ".jpg"};
@@ -40,6 +40,7 @@ public class ImageDataSet {
         this.pathFilter = new BalancedPathFilter(new Random(), allowedExtensions, labelMarker);
 
         this.numberOfClasses = classNumber;
+        this.batchSize = batchSize;
 
         this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, numberOfClasses);
 
@@ -49,7 +50,6 @@ public class ImageDataSet {
             e.printStackTrace();
         }
 
-        System.out.println("something");
     }
 
     public void splitData(int train, int test) {
@@ -68,6 +68,10 @@ public class ImageDataSet {
 
     public void resetIterator(){
         iterator.reset();
+    }
+
+    public DataSetIterator getIterator(){
+        return iterator;
     }
 
 }

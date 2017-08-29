@@ -3,7 +3,6 @@ package com.github.sshaddicts.lucrecium.neuralNetwork;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
-import org.deeplearning4j.nn.conf.LearningRatePolicy;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
@@ -15,22 +14,25 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class RichNeuralNet {
-    private int ITERATIONS = 10000;
-    private double LEARNING_RATE = 0.001;
+    private int ITERATIONS = 1;
+    private double LEARNING_RATE = 0.006;
 
     private boolean USE_DROP_CONNECT = false;
     private boolean MINI_BATCH = false;
     private boolean PRETRAIN = false;
     private boolean BACKPROP = true;
-    private Activation ACTIVATION_FUNC = Activation.SIGMOID;
+    private Activation ACTIVATION_FUNC = Activation.RELU;
+    private boolean REGULARIZATION = true;
 
     private DataSet data;
+    private Evaluation eval = new Evaluation();
 
     public void setData(DataSet data) {
         this.data = data;
@@ -47,7 +49,7 @@ public class RichNeuralNet {
         return network;
     }
 
-    public void addLayer(Layer layer){
+    public void addLayer(Layer layer) {
     }
 
     public void init(int inputSize, int hiddenNumber, int hiddenSize, int classNumber) {
@@ -60,8 +62,11 @@ public class RichNeuralNet {
         builder.useDropConnect(USE_DROP_CONNECT);
         builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
 
+        builder.updater(Updater.NESTEROVS);
         builder.biasInit(0);
         builder.miniBatch(MINI_BATCH);
+
+        builder.regularization(REGULARIZATION).l2(1e-4);
 
         NeuralNetConfiguration.ListBuilder listBuilder = builder.list();
 
@@ -84,14 +89,15 @@ public class RichNeuralNet {
         listBuilder.pretrain(PRETRAIN);
         listBuilder.backprop(BACKPROP);
 
-        listBuilder.setInputType(InputType.convolutional(18,9,1));
+        listBuilder.setInputType(InputType.convolutional(18, 9, 1));
 
         multilayerConf = listBuilder.build();
+
         network = new MultiLayerNetwork(multilayerConf);
         network.init();
     }
 
-    public void init(int numRows, int numColumns){
+    public void init(int numRows, int numColumns) {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123)
                 .iterations(ITERATIONS)
@@ -107,18 +113,18 @@ public class RichNeuralNet {
                 .layer(7, new RBM.Builder().nIn(25).nOut(50).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
                 .layer(8, new RBM.Builder().nIn(50).nOut(100).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
                 .layer(9, new OutputLayer.Builder(LossFunctions.LossFunction.MSE).activation(Activation.SIGMOID).nIn(100).nOut(10).build())
-                .pretrain(true).backprop(true).setInputType(InputType.convolutional(18,9,1))
+                .pretrain(true).backprop(true).setInputType(InputType.convolutional(18, 9, 1))
                 .build();
 
         network = new MultiLayerNetwork(conf);
         network.init();
     }
 
-    public void init(MultiLayerNetwork net){
+    public void init(MultiLayerNetwork net) {
         this.network = net;
     }
 
-    public void init(){
+    public void init() {
         // learning rate schedule in the form of <Iteration #, Learning Rate>
         Map<Integer, Double> lrSchedule = new HashMap<>();
         lrSchedule.put(0, 0.01);
@@ -129,7 +135,7 @@ public class RichNeuralNet {
                 .seed(123)
                 .iterations(ITERATIONS)
                 .regularization(true).l2(0.0005)
-                .learningRate(.01)
+                .learningRate(LEARNING_RATE)
 
                 .weightInit(WeightInit.XAVIER)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
@@ -142,8 +148,8 @@ public class RichNeuralNet {
                         .activation(Activation.IDENTITY)
                         .build())
                 .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                        .kernelSize(2,2)
-                        .stride(2,2)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
                         .build())
                 .layer(2, new ConvolutionLayer.Builder(4, 2)
                         .stride(1, 1)
@@ -151,8 +157,8 @@ public class RichNeuralNet {
                         .activation(Activation.IDENTITY)
                         .build())
                 .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                        .kernelSize(2,2)
-                        .stride(2,2)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
                         .build())
                 .layer(4, new DenseLayer.Builder().activation(Activation.RELU)
                         .nOut(500).build())
@@ -160,10 +166,10 @@ public class RichNeuralNet {
                         .nOut(classNumber)
                         .activation(Activation.SOFTMAX)
                         .build())
-                .setInputType(InputType.convolutionalFlat(18,9,1))
+                .setInputType(InputType.convolutionalFlat(18, 9, 1))
                 .backprop(true).pretrain(false).build();
-            network = new MultiLayerNetwork(conf);
-            network.init();
+        network = new MultiLayerNetwork(conf);
+        network.init();
     }
 
     public void train() {
@@ -172,7 +178,12 @@ public class RichNeuralNet {
         Evaluation eval = new Evaluation(classNumber);
         eval.eval(data.getLabels(), output);
 
+
         System.out.println(eval.stats());
+    }
+
+    public void train(DataSetIterator data){
+        network.fit(data);
     }
 
     private DenseLayer configureLayer(int nIn, int nOut) {
@@ -186,11 +197,13 @@ public class RichNeuralNet {
         return hiddenLayerBuilder.build();
     }
 
-    public void eval(){
-        INDArray output = network.output(data.getFeatureMatrix());
-        Evaluation eval = new Evaluation(classNumber);
-        eval.eval(data.getLabels(), output);
+    public void eval(INDArray input, INDArray actual) {
+        INDArray output = network.output(input);
+        eval = new Evaluation(classNumber);
+        eval.eval(actual, output);
+    }
 
+    public void printStats(){
         System.out.println(eval.stats());
     }
 }

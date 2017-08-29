@@ -1,22 +1,19 @@
 package com.github.sshaddicts.lucrecium.imageProcessing;
 
-import org.bytedeco.javacpp.FlyCapture2;
+
 import org.opencv.core.*;
 import org.opencv.features2d.MSER;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Created by Alex on 29.07.2017.
  */
-//TODO extend rect class with validation methods
-//TODO add slant correction
+//TODO rewrite symbol detection
 public class ImageProcessor {
 
     private Mat image;
@@ -42,10 +39,13 @@ public class ImageProcessor {
 
     public ImageProcessor(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
-            throw new IllegalArgumentException("Filename cannot be null or empty.");
+            throw new IllegalArgumentException("Filename cannot be null or empty. Requested filepath: " + filename );
         }
 
         this.image = Imgcodecs.imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+        if(image.height()==0 || image.width() == 0)
+            throw new IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = " + image.height() + ", width = " + image.width() + ".\n" +
+                    "Requested filepath: " + filename + ".");
         this.regions = new ArrayList<>();
         this.rect = new MatOfRect();
         this.rois = new ArrayList<>();
@@ -53,18 +53,23 @@ public class ImageProcessor {
 
     private void threshold() {
         Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
-        Imgproc.adaptiveThreshold(image, tempMat, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 7, 5);
+        Imgproc.adaptiveThreshold(image, tempMat, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 7, 5);
         image = tempMat;
     }
 
     private void blur() {
         Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
-        Imgproc.blur(image, tempMat, new Size(8, 8));
+        Imgproc.GaussianBlur(image, tempMat, new Size(3,3), 0);
         image = tempMat;
     }
 
     private void resize() {
-        Mat tempMat = new Mat();
+        if(image.height() == 0 || image.width() == 0)
+
+        if(image.height() < 500){
+            resizeRate *= 2.5;
+        }
+        Mat tempMat = new Mat(image.height(), image.width(), image.type());
 
         double height, width;
         height = image.height() * resizeRate;
@@ -91,6 +96,10 @@ public class ImageProcessor {
                 if (rect.height > 50)
                     result = image.submat(rect);
             }
+        }
+
+        if(result.height() == 0){
+            return;
         }
 
         image = result;
@@ -148,7 +157,7 @@ public class ImageProcessor {
         return getMats();
     }
 
-    //TODO add built-in resizing
+
     public List<Mat> getMats() {
         List<Mat> returnList = new ArrayList<>();
 
@@ -187,5 +196,100 @@ public class ImageProcessor {
 
     public boolean save(String filename) {
         return Imgcodecs.imwrite(filename, image);
+    }
+
+    public Mat deskew(Mat src, double angle){
+        Point center = new Point(src.width()/2, src.height()/2);
+        Mat rotatedImage = Imgproc.getRotationMatrix2D(center, angle, 1.0);
+
+        Size size = new Size(src.width(), src.height());
+        Imgproc.warpAffine(src, src, rotatedImage, size, Imgproc.INTER_LINEAR
+                + Imgproc.CV_WARP_FILL_OUTLIERS);
+        return src;
+    }
+
+    //TODO refactor
+    public void computeSkewAndProcess(){
+        resize();
+
+        //convert color is done by default
+
+        Mat tmpMat = new Mat(image.height(), image.width(), image.type());
+
+        //create a mask for future use:
+        Mat imageClone = image.clone();
+
+        Mat mask = new Mat(image.height(), image.width(), image.type());
+        Imgproc.threshold(imageClone, mask, 100,255,Imgproc.THRESH_BINARY);
+
+        Core.bitwise_and(image, mask, tmpMat);
+
+        //Imgproc.GaussianBlur(image, tmpMat, new Size(1,1), 0);
+        Imgproc.adaptiveThreshold(tmpMat, image, 255,Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+                            Imgproc.THRESH_BINARY_INV,11,12);
+
+        //get minimal rotated rect
+        Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
+        Core.findNonZero(tmpMat, pointMat);
+
+        MatOfPoint2f mat2f = new MatOfPoint2f();
+        pointMat.convertTo(mat2f, CvType.CV_32FC2);
+
+        //get angle
+        RotatedRect rotated = Imgproc.minAreaRect(mat2f);
+
+        Point[] vertices = new Point[4];
+
+        rotated.points(vertices);
+
+        if(rotated.size.width > rotated.size.height)
+            rotated.angle += 90.f;
+
+        System.out.println(rotated.angle);
+
+        image = deskew(image, rotated.angle);
+
+        cropImage();
+    }
+
+    //TODO figure this one out:
+    public void detectCharacters(){
+        Mat newImage = image.clone();
+
+        Imshow newShower = new Imshow("chars");
+
+        Imgproc.cvtColor(image, newImage, Imgproc.COLOR_GRAY2RGB);
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hiech = new Mat();
+
+        Imgproc.findContours(image, contours, hiech, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        contours.removeIf((mat) -> image.height() - mat.height() < 200);
+        contours.removeIf((mat) -> mat.size().area() < 7);
+
+        Mat labels = new Mat();
+
+        //Imgproc.connectedComponents(image, labels, 4, CvType.CV_32S);
+
+        Imshow label = new Imshow("lke");
+        label.showImage(labels);
+
+        //Imgproc.drawContours(newImage, contours, -1, new Scalar(255,0,2), 1);
+
+        float hierarchy;
+
+        for (MatOfPoint contour :
+                contours) {
+            Rect bound = Imgproc.boundingRect(contour);
+
+            MatOfInt hull = new MatOfInt();
+            Imgproc.convexHull(contour, hull);
+
+
+            Imgproc.rectangle(newImage, bound.tl(), bound.br(), new Scalar(0,128,128),1);
+        }
+
+        newShower.showImage(newImage);
     }
 }

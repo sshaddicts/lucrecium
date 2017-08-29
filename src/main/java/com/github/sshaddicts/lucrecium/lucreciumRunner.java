@@ -3,12 +3,20 @@ package com.github.sshaddicts.lucrecium;
 import com.github.sshaddicts.lucrecium.datasets.DummyDataSet;
 import com.github.sshaddicts.lucrecium.datasets.ImageDataSet;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
+import com.github.sshaddicts.lucrecium.imageProcessing.Imshow;
 import com.github.sshaddicts.lucrecium.imageProcessing.Validator;
 import com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet;
 import com.github.sshaddicts.lucrecium.util.FileInteractions;
+import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.ui.api.UIServer;
+import org.deeplearning4j.ui.stats.StatsListener;
+import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 import org.deeplearning4j.util.ModelSerializer;
+import org.nd4j.linalg.dataset.DataSet;
 import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.awt.*;
 import java.io.IOException;
@@ -17,9 +25,11 @@ import java.io.IOException;
 public class lucreciumRunner {
 
     public static int PICTURE_NUMBER = 0;
-    public static int CLASS_NUMBER = 2;
+    public static int CLASS_NUMBER = 10;
+    public static int BATCH_SIZE = 30;
+    public static int NUMBER_OF_EPOCHS = 1000;
 
-    public static String NETWORK_DATA_DIR = "testingData";
+    public static String NETWORK_DATA_DIR = "test_kek";
 
     public static void main(String[] args) {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -27,24 +37,64 @@ public class lucreciumRunner {
         Validator.MIN_AREA_THRESHOLD = 5;
         Validator.MAX_AREA_THRESHOLD = 1000;
         Validator.ASPECT_RATIO = 2 / 1;
-        Validator.MIN_ASPECT_RATIO = 1/2;
+        Validator.MIN_ASPECT_RATIO = 1 / 2;
 
-        testNetwork();
+
+        Imshow shower = new Imshow("old_processing");
+        Imshow newShow = new Imshow("character detecting");
+        ImageProcessor processor = new ImageProcessor(DummyDataSet.oldData[0]);
+        ImageProcessor processor1 = new ImageProcessor(DummyDataSet.oldData[0]);
+
+        processor1.preProcess();
+        shower.showImage(processor1.getImage());
+
+        Mat image = Imgcodecs.imread("skew_data/skew_out.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+
+
+        processor.computeSkewAndProcess();
+        processor.detectCharacters();
+        newShow.showImage(processor.getImage());
+
+
     }
 
-    public static void testNetwork(){
-        ImageDataSet dataSet = new ImageDataSet(NETWORK_DATA_DIR, CLASS_NUMBER);
+    public static void testSavedNetwork(){
+        RichNeuralNet network = new RichNeuralNet();
+
+        try {
+            network.init(loadNetwork("netFile"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        ImageDataSet dataset = new ImageDataSet(NETWORK_DATA_DIR, CLASS_NUMBER, BATCH_SIZE);
+
+        while(dataset.hasNext()){
+            DataSet next = dataset.next();
+
+            network.eval(next.getFeatureMatrix(), next.getLabels());
+        }
+        network.printStats();
+    }
+
+
+    public static void testNetwork() {
+        ImageDataSet dataSet = new ImageDataSet(NETWORK_DATA_DIR, CLASS_NUMBER, BATCH_SIZE);
 
         RichNeuralNet net = new RichNeuralNet();
-        //net.init(18 * 9, 50, 50, CLASS_NUMBER);
+        net.init(18 * 9, 10, 10, CLASS_NUMBER);
+
+        UIServer uiServer = UIServer.getInstance();
+        StatsStorage statsStorage = new InMemoryStatsStorage();
+        uiServer.attach(statsStorage);
+        net.getNet().setListeners(new StatsListener(statsStorage));
 
         //net.init(18,9);
 
-        net.init();
+        //net.init();
 
-        while (dataSet.hasNext()) {
-            net.setData(dataSet.next());
-            net.train();
+        for (int i = 0; i < NUMBER_OF_EPOCHS; i++) {
+            net.train(dataSet.getIterator());
         }
 
 
@@ -85,7 +135,7 @@ public class lucreciumRunner {
 
             processor.delta = 0;
             processor.minArea = 25;
-            processor.maxArea = 21*852;
+            processor.maxArea = 21 * 852;
             processor.maxVariation = Integer.MAX_VALUE;
             processor.minDiversity = 5;
             processor.maxEvolution = 5;
