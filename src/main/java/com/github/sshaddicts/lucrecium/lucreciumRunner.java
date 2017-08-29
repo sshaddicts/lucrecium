@@ -24,7 +24,7 @@ import java.io.IOException;
 
 public class lucreciumRunner {
 
-    public static int PICTURE_NUMBER = 0;
+    public static int PICTURE_NUMBER = 5;
     public static int CLASS_NUMBER = 10;
     public static int BATCH_SIZE = 30;
     public static int NUMBER_OF_EPOCHS = 1000;
@@ -40,22 +40,12 @@ public class lucreciumRunner {
         Validator.MIN_ASPECT_RATIO = 1 / 2;
 
 
-        Imshow shower = new Imshow("old_processing");
         Imshow newShow = new Imshow("character detecting");
-        ImageProcessor processor = new ImageProcessor(DummyDataSet.oldData[0]);
-        ImageProcessor processor1 = new ImageProcessor(DummyDataSet.oldData[0]);
-
-        processor1.preProcess();
-        shower.showImage(processor1.getImage());
-
-        Mat image = Imgcodecs.imread("skew_data/skew_out.jpg", Imgcodecs.IMREAD_GRAYSCALE);
-
+        ImageProcessor processor = new ImageProcessor(DummyDataSet.oldData[PICTURE_NUMBER]);
 
         processor.computeSkewAndProcess();
         processor.detectCharacters();
         newShow.showImage(processor.getImage());
-
-
     }
 
     public static void testSavedNetwork(){

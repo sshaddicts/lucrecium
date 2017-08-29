@@ -1,11 +1,15 @@
 package com.github.sshaddicts.lucrecium.imageProcessing;
 
 
+import org.apache.commons.io.FileUtils;
 import org.opencv.core.*;
 import org.opencv.features2d.MSER;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +24,8 @@ public class ImageProcessor {
     private List<MatOfPoint> regions;
     private MatOfRect rect;
 
-    private List<Rect> rois;
+    private List<Rect> chars;
+    private List<Rect> lines;
     private static int DEFAULT_REGION_PADDING = 1;
 
     public int delta = 5;
@@ -48,7 +53,7 @@ public class ImageProcessor {
                     "Requested filepath: " + filename + ".");
         this.regions = new ArrayList<>();
         this.rect = new MatOfRect();
-        this.rois = new ArrayList<>();
+        this.chars = new ArrayList<>();
     }
 
     private void threshold() {
@@ -137,7 +142,7 @@ public class ImageProcessor {
                 rect = fixRect(rect, DEFAULT_REGION_PADDING);
                 //Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(92));
 
-                rois.add(rect);
+                chars.add(rect);
                 roisize++;
             }
         }
@@ -165,8 +170,8 @@ public class ImageProcessor {
 
         Size outputSize = new Size(9, 18);
 
-        for (int i = 0; i < rois.size(); i++) {
-            Rect rect = rois.get(i);
+        for (int i = 0; i < chars.size(); i++) {
+            Rect rect = chars.get(i);
 
             Mat temp = new Mat();
             source = image.submat(rect);
@@ -252,44 +257,65 @@ public class ImageProcessor {
         cropImage();
     }
 
-    //TODO figure this one out:
     public void detectCharacters(){
         Mat newImage = image.clone();
-
-        Imshow newShower = new Imshow("chars");
 
         Imgproc.cvtColor(image, newImage, Imgproc.COLOR_GRAY2RGB);
 
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hiech = new Mat();
 
-        Imgproc.findContours(image, contours, hiech, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(image, contours, hiech, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
 
         contours.removeIf((mat) -> image.height() - mat.height() < 200);
         contours.removeIf((mat) -> mat.size().area() < 7);
 
-        Mat labels = new Mat();
+        chars = mergeRects(contours);
 
-        //Imgproc.connectedComponents(image, labels, 4, CvType.CV_32S);
+        for (int i = 0; i < hiech.width(); i++) {
+            hiech.get(0,i);
+        }
 
-        Imshow label = new Imshow("lke");
-        label.showImage(labels);
+        mergeWords();
+    }
 
-        //Imgproc.drawContours(newImage, contours, -1, new Scalar(255,0,2), 1);
+    public List<Rect> mergeRects(List<MatOfPoint> points){
+        List<Rect> result = new ArrayList<>();
+        Mat mask = Mat.zeros(image.size(), image.type());
 
-        float hierarchy;
+        for (int i = 0; i < points.size(); i++) {
+            Rect rect = Imgproc.boundingRect(points.get(i));
+            rect.width -=1;
+            Imgproc.rectangle(mask, rect.tl(), rect.br(), new Scalar(255), -1);
+        }
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        Imgproc.findContours(mask, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
         for (MatOfPoint contour :
                 contours) {
-            Rect bound = Imgproc.boundingRect(contour);
-
-            MatOfInt hull = new MatOfInt();
-            Imgproc.convexHull(contour, hull);
-
-
-            Imgproc.rectangle(newImage, bound.tl(), bound.br(), new Scalar(0,128,128),1);
+            result.add(Imgproc.boundingRect(contour));
         }
 
-        newShower.showImage(newImage);
+        return result;
+    }
+
+    //TODO figure out word segmentation
+    public List<Rect> mergeWords(){
+        List<Rect> result = new ArrayList<>();
+
+
+        Mat labels = new Mat();
+        Imgproc.connectedComponents(image, labels);
+
+        File file = new File("label.dump");
+
+        try {
+            FileUtils.write(file, labels.dump(), Charset.defaultCharset());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 }
