@@ -13,7 +13,7 @@ public class FileInteractions {
     public static void saveMats(List<Mat> list) {
         for (Mat mat :
                 list) {
-            Imgcodecs.imwrite("testImages/test_" + System.nanoTime() + ".png", mat);
+            Imgcodecs.imwrite("wordImages/test_" + System.nanoTime() + ".png", mat);
         }
     }
 

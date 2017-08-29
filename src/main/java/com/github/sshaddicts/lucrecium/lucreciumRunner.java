@@ -44,8 +44,10 @@ public class lucreciumRunner {
         ImageProcessor processor = new ImageProcessor(DummyDataSet.oldData[PICTURE_NUMBER]);
 
         processor.computeSkewAndProcess();
-        processor.detectCharacters();
+        processor.detectText(ImageProcessor.MERGE_WORDS);
         newShow.showImage(processor.getImage());
+
+        FileInteractions.saveMats(processor.getMats());
     }
 
     public static void testSavedNetwork(){

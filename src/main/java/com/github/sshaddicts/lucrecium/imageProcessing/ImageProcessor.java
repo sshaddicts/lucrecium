@@ -38,17 +38,20 @@ public class ImageProcessor {
     public int minMargin = 0;
     public int edgeBlurSize = 0;
 
+    public static int MERGE_WORDS = -2;
+    public static int MERGE_CHARS = 1;
+
     public double resizeRate = 0.3;
 
     int roisize = 0;
 
     public ImageProcessor(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
-            throw new IllegalArgumentException("Filename cannot be null or empty. Requested filepath: " + filename );
+            throw new IllegalArgumentException("Filename cannot be null or empty. Requested filepath: " + filename);
         }
 
         this.image = Imgcodecs.imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-        if(image.height()==0 || image.width() == 0)
+        if (image.height() == 0 || image.width() == 0)
             throw new IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = " + image.height() + ", width = " + image.width() + ".\n" +
                     "Requested filepath: " + filename + ".");
         this.regions = new ArrayList<>();
@@ -64,16 +67,16 @@ public class ImageProcessor {
 
     private void blur() {
         Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
-        Imgproc.GaussianBlur(image, tempMat, new Size(3,3), 0);
+        Imgproc.GaussianBlur(image, tempMat, new Size(3, 3), 0);
         image = tempMat;
     }
 
     private void resize() {
-        if(image.height() == 0 || image.width() == 0)
+        if (image.height() == 0 || image.width() == 0)
 
-        if(image.height() < 500){
-            resizeRate *= 2.5;
-        }
+            if (image.height() < 500) {
+                resizeRate *= 2.5;
+            }
         Mat tempMat = new Mat(image.height(), image.width(), image.type());
 
         double height, width;
@@ -103,14 +106,14 @@ public class ImageProcessor {
             }
         }
 
-        if(result.height() == 0){
+        if (result.height() == 0) {
             return;
         }
 
         image = result;
     }
 
-    public void preProcess(){
+    public void preProcess() {
         blur();
         cropImage();
         resize();
@@ -156,19 +159,18 @@ public class ImageProcessor {
         return image;
     }
 
-    public List<Mat> getText(){
+    public List<Mat> getText() {
         preProcess();
         drawROI();
         return getMats();
     }
-
 
     public List<Mat> getMats() {
         List<Mat> returnList = new ArrayList<>();
 
         Mat source;
 
-        Size outputSize = new Size(9, 18);
+        //Size outputSize = new Size(9, 18);
 
         for (int i = 0; i < chars.size(); i++) {
             Rect rect = chars.get(i);
@@ -176,9 +178,9 @@ public class ImageProcessor {
             Mat temp = new Mat();
             source = image.submat(rect);
 
-            Imgproc.resize(source, temp, outputSize);
+            //Imgproc.resize(source, temp, outputSize);
 
-            returnList.add(temp);
+            returnList.add(source);
         }
 
         return returnList;
@@ -194,8 +196,8 @@ public class ImageProcessor {
         int highY = rect.height + (padding * 2);
 
         return new Rect(lowX <= 0 ? 0 : lowX, lowY <= 0 ? 0 : lowY,
-                rect.x + highX > image.cols() -2 ? rect.width: highX,
-                rect.y + highY > image.rows() -2 ? rect.height: highY);
+                rect.x + highX > image.cols() - 2 ? rect.width : highX,
+                rect.y + highY > image.rows() - 2 ? rect.height : highY);
 
     }
 
@@ -203,8 +205,8 @@ public class ImageProcessor {
         return Imgcodecs.imwrite(filename, image);
     }
 
-    public Mat deskew(Mat src, double angle){
-        Point center = new Point(src.width()/2, src.height()/2);
+    public Mat deskew(Mat src, double angle) {
+        Point center = new Point(src.width() / 2, src.height() / 2);
         Mat rotatedImage = Imgproc.getRotationMatrix2D(center, angle, 1.0);
 
         Size size = new Size(src.width(), src.height());
@@ -214,10 +216,8 @@ public class ImageProcessor {
     }
 
     //TODO refactor
-    public void computeSkewAndProcess(){
+    public void computeSkewAndProcess() {
         resize();
-
-        //convert color is done by default
 
         Mat tmpMat = new Mat(image.height(), image.width(), image.type());
 
@@ -225,13 +225,13 @@ public class ImageProcessor {
         Mat imageClone = image.clone();
 
         Mat mask = new Mat(image.height(), image.width(), image.type());
-        Imgproc.threshold(imageClone, mask, 100,255,Imgproc.THRESH_BINARY);
+        Imgproc.threshold(imageClone, mask, 100, 255, Imgproc.THRESH_BINARY);
 
         Core.bitwise_and(image, mask, tmpMat);
 
         //Imgproc.GaussianBlur(image, tmpMat, new Size(1,1), 0);
-        Imgproc.adaptiveThreshold(tmpMat, image, 255,Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                            Imgproc.THRESH_BINARY_INV,11,12);
+        Imgproc.adaptiveThreshold(tmpMat, image, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+                Imgproc.THRESH_BINARY_INV, 11, 12);
 
         //get minimal rotated rect
         Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
@@ -243,11 +243,7 @@ public class ImageProcessor {
         //get angle
         RotatedRect rotated = Imgproc.minAreaRect(mat2f);
 
-        Point[] vertices = new Point[4];
-
-        rotated.points(vertices);
-
-        if(rotated.size.width > rotated.size.height)
+        if (rotated.size.width > rotated.size.height)
             rotated.angle += 90.f;
 
         System.out.println(rotated.angle);
@@ -257,7 +253,7 @@ public class ImageProcessor {
         cropImage();
     }
 
-    public void detectCharacters(){
+    public void detectText(int mergeType) {
         Mat newImage = image.clone();
 
         Imgproc.cvtColor(image, newImage, Imgproc.COLOR_GRAY2RGB);
@@ -270,22 +266,21 @@ public class ImageProcessor {
         contours.removeIf((mat) -> image.height() - mat.height() < 200);
         contours.removeIf((mat) -> mat.size().area() < 7);
 
-        chars = mergeRects(contours);
+
+        chars = mergeRects(contours, mergeType);
 
         for (int i = 0; i < hiech.width(); i++) {
-            hiech.get(0,i);
+            hiech.get(0, i);
         }
-
-        mergeWords();
     }
 
-    public List<Rect> mergeRects(List<MatOfPoint> points){
+    public List<Rect> mergeRects(List<MatOfPoint> points, int mergeType) {
         List<Rect> result = new ArrayList<>();
         Mat mask = Mat.zeros(image.size(), image.type());
 
         for (int i = 0; i < points.size(); i++) {
             Rect rect = Imgproc.boundingRect(points.get(i));
-            rect.width -=1;
+            rect.width -= mergeType;
             Imgproc.rectangle(mask, rect.tl(), rect.br(), new Scalar(255), -1);
         }
 
@@ -301,12 +296,25 @@ public class ImageProcessor {
     }
 
     //TODO figure out word segmentation
-    public List<Rect> mergeWords(){
+    public List<Rect> oldMergeWords() {
         List<Rect> result = new ArrayList<>();
 
 
         Mat labels = new Mat();
-        Imgproc.connectedComponents(image, labels);
+        Mat stats = new Mat();
+        Mat centroids = new Mat();
+        int totalLabels = Imgproc.connectedComponentsWithStats(image, labels, stats, centroids);
+
+
+        int currentLabel = 0;
+        for (int i = 1; i < totalLabels; i ++) {
+
+            Rect rect = new Rect(
+                    (int)stats.get(i, 0)[0],
+                    (int)stats.get(i, 1)[0],
+                    (int)stats.get(i, 2)[0],
+                    (int)stats.get(i, 3)[0]);
+        }
 
         File file = new File("label.dump");
 
