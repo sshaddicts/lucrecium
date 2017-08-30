@@ -31,13 +31,13 @@ public class Validator {
 
         //check size
         double area = rect.size().area();
-        boolean isOkArea = area < MAX_AREA_THRESHOLD;
+        boolean isValidArea = area < MAX_AREA_THRESHOLD;
 
         //check aspect ratio
         double realRatio = rect.height / rect.width;
-        boolean aspectRatio = realRatio < ASPECT_RATIO;
+        boolean isValidAspectRatio = realRatio < ASPECT_RATIO;
 
-        return isOkArea && aspectRatio;
+        return isValidArea && isValidAspectRatio;
     }
 
     public static boolean isOverlapping(Rect rect1, Rect rect2) {
@@ -47,5 +47,15 @@ public class Validator {
             return true;
         }
         return false;
+    }
+
+    public static Rect merge(Rect rect1, Rect rect2){
+
+        return new Rect(Integer.min(rect1.x, rect2.x),
+                        Integer.max(rect1.y, rect2.y),
+
+                        Integer.max(rect1.x + rect1.width, rect2.x + rect2.width),
+                        //Integer.max(rect1.y, rect2.y ) + Integer.max(rect1.height,rect2.height));
+                        rect1.height);
     }
 }

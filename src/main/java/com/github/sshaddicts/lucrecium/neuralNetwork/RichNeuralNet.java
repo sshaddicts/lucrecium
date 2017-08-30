@@ -1,7 +1,6 @@
 package com.github.sshaddicts.lucrecium.neuralNetwork;
 
 import org.deeplearning4j.eval.Evaluation;
-import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -15,21 +14,22 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
-import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class RichNeuralNet {
-    private int ITERATIONS = 1;
-    private double LEARNING_RATE = 0.006;
 
-    private boolean USE_DROP_CONNECT = false;
-    private boolean MINI_BATCH = false;
-    private boolean PRETRAIN = false;
-    private boolean BACKPROP = true;
-    private Activation ACTIVATION_FUNC = Activation.RELU;
-    private boolean REGULARIZATION = true;
+public class RichNeuralNet {
+    private final int ITERATIONS = 1;
+    private final double LEARNING_RATE = 0.006;
+
+    private final boolean USE_DROP_CONNECT = false;
+    private final boolean MINI_BATCH = false;
+    private final boolean PRETRAIN = false;
+    private final boolean BACKPROP = true;
+    private final Activation ACTIVATION_FUNC = Activation.RELU;
+    private final boolean REGULARIZATION = true;
 
     private DataSet data;
     private Evaluation eval = new Evaluation();
@@ -47,9 +47,6 @@ public class RichNeuralNet {
 
     public MultiLayerNetwork getNet() {
         return network;
-    }
-
-    public void addLayer(Layer layer) {
     }
 
     public void init(int inputSize, int hiddenNumber, int hiddenSize, int classNumber) {
@@ -76,7 +73,7 @@ public class RichNeuralNet {
             listBuilder.layer(i, configureLayer(hiddenSize, hiddenSize));
         }
 
-        OutputLayer.Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD);
+        OutputLayer.Builder outputLayerBuilder = new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD);
 
         outputLayerBuilder.nIn(hiddenSize);
         outputLayerBuilder.nOut(classNumber);
@@ -103,16 +100,16 @@ public class RichNeuralNet {
                 .iterations(ITERATIONS)
                 .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
                 .list()
-                .layer(0, new RBM.Builder().nIn(numRows * numColumns).nOut(100).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
-                .layer(1, new RBM.Builder().nIn(100).nOut(50).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
-                .layer(2, new RBM.Builder().nIn(50).nOut(25).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
-                .layer(3, new RBM.Builder().nIn(25).nOut(10).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
-                .layer(4, new RBM.Builder().nIn(10).nOut(3).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build()) //encoding stops
-                .layer(5, new RBM.Builder().nIn(3).nOut(10).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build()) //decoding starts
-                .layer(6, new RBM.Builder().nIn(10).nOut(25).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
-                .layer(7, new RBM.Builder().nIn(25).nOut(50).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
-                .layer(8, new RBM.Builder().nIn(50).nOut(100).lossFunction(LossFunctions.LossFunction.KL_DIVERGENCE).build())
-                .layer(9, new OutputLayer.Builder(LossFunctions.LossFunction.MSE).activation(Activation.SIGMOID).nIn(100).nOut(10).build())
+                .layer(0, new RBM.Builder().nIn(numRows * numColumns).nOut(100).lossFunction(LossFunction.KL_DIVERGENCE).build())
+                .layer(1, new RBM.Builder().nIn(100).nOut(50).lossFunction(LossFunction.KL_DIVERGENCE).build())
+                .layer(2, new RBM.Builder().nIn(50).nOut(25).lossFunction(LossFunction.KL_DIVERGENCE).build())
+                .layer(3, new RBM.Builder().nIn(25).nOut(10).lossFunction(LossFunction.KL_DIVERGENCE).build())
+                .layer(4, new RBM.Builder().nIn(10).nOut(3).lossFunction(LossFunction.KL_DIVERGENCE).build()) //encoding stops
+                .layer(5, new RBM.Builder().nIn(3).nOut(10).lossFunction(LossFunction.KL_DIVERGENCE).build()) //decoding starts
+                .layer(6, new RBM.Builder().nIn(10).nOut(25).lossFunction(LossFunction.KL_DIVERGENCE).build())
+                .layer(7, new RBM.Builder().nIn(25).nOut(50).lossFunction(LossFunction.KL_DIVERGENCE).build())
+                .layer(8, new RBM.Builder().nIn(50).nOut(100).lossFunction(LossFunction.KL_DIVERGENCE).build())
+                .layer(9, new OutputLayer.Builder(LossFunction.MSE).activation(Activation.SIGMOID).nIn(100).nOut(10).build())
                 .pretrain(true).backprop(true).setInputType(InputType.convolutional(18, 9, 1))
                 .build();
 
@@ -162,7 +159,7 @@ public class RichNeuralNet {
                         .build())
                 .layer(4, new DenseLayer.Builder().activation(Activation.RELU)
                         .nOut(500).build())
-                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                .layer(5, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
                         .nOut(classNumber)
                         .activation(Activation.SOFTMAX)
                         .build())

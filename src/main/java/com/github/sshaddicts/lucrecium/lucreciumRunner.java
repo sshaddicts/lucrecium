@@ -22,10 +22,10 @@ import java.io.IOException;
 
 public class lucreciumRunner {
 
-    public static int PICTURE_NUMBER = 5;
-    public static int CLASS_NUMBER = 10;
-    public static int BATCH_SIZE = 30;
-    public static int NUMBER_OF_EPOCHS = 1000;
+    public final static int PICTURE_NUMBER = 7;
+    public final static int CLASS_NUMBER = 10;
+    public final static int BATCH_SIZE = 30;
+    public final static int NUMBER_OF_EPOCHS = 1000;
 
     public static String NETWORK_DATA_DIR = "test_kek";
 
@@ -42,6 +42,7 @@ public class lucreciumRunner {
 
         Imshow newShow = new Imshow("character detecting");
         ImageProcessor processor = new ImageProcessor(DummyDataSet.oldData[PICTURE_NUMBER]);
+        //ImageProcessor processor = new ImageProcessor("real_data/skew_data/skew_good.jpg");
 
         processor.computeSkewAndProcess();
         processor.detectText(ImageProcessor.MERGE_WORDS);
@@ -81,10 +82,6 @@ public class lucreciumRunner {
         uiServer.attach(statsStorage);
         net.getNet().setListeners(new StatsListener(statsStorage));
 
-        //net.init(18,9);
-
-        //net.init();
-
         for (int i = 0; i < NUMBER_OF_EPOCHS; i++) {
             net.train(dataSet.getIterator());
         }
@@ -118,57 +115,10 @@ public class lucreciumRunner {
 
     }
 
-    public static void createCharacterDataSet() {
-        int length = DummyDataSet.realData.length;
-
-        for (int i = 0; i < length; i++) {
-
-            ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[i]);
-
-            processor.delta = 0;
-            processor.minArea = 25;
-            processor.maxArea = 21 * 852;
-            processor.maxVariation = Integer.MAX_VALUE;
-            processor.minDiversity = 5;
-            processor.maxEvolution = 5;
-            processor.areaThreshold = 5000;
-            processor.minMargin = 5;
-            processor.edgeBlurSize = 0;
-
-
-            FileInteractions.saveMats(processor.getText());
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            System.out.println(i);
-        }
-    }
-
     public static void saveCroppedImage() {
         ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[PICTURE_NUMBER]);
         processor.preProcess();
         processor.save("file_" + System.currentTimeMillis() + ".png");
     }
 
-    public static void saveProcessorInfo(ImageProcessor processor) {
-        FileInteractions.saveMatTo(processor.getImage(), String.format(
-                "mser_data/picture = %d; delta = %d;" +
-                        "minArea = %d;" +
-                        "maxArea = %d;" +
-                        "maxVariation = %d;" +
-                        "minDiversity = %d;" +
-                        "maxEvolution = %d;" +
-                        "areaThreshold = %d;" +
-                        "minMargin = %d;" +
-                        "edgeBlurSize = %d;.jpg",
-                PICTURE_NUMBER, processor.delta, processor.minArea, processor.maxArea,
-                processor.maxVariation, processor.minDiversity,
-                processor.maxEvolution, processor.areaThreshold,
-                processor.minMargin, processor.edgeBlurSize
-        ));
-
-    }
 }

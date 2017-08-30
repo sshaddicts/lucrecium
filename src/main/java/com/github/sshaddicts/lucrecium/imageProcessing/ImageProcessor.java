@@ -3,7 +3,6 @@ package com.github.sshaddicts.lucrecium.imageProcessing;
 
 import org.apache.commons.io.FileUtils;
 import org.opencv.core.*;
-import org.opencv.features2d.MSER;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -21,29 +20,17 @@ import java.util.Objects;
 public class ImageProcessor {
 
     private Mat image;
-    private List<MatOfPoint> regions;
-    private MatOfRect rect;
+    private MatOfRect regions;
 
     private List<Rect> chars;
     private List<Rect> lines;
-    private static int DEFAULT_REGION_PADDING = 1;
+    public static final int DEFAULT_REGION_PADDING = 1;
 
-    public int delta = 5;
-    public int minArea = 20;
-    public int maxArea = Integer.MAX_VALUE;
-    public int maxVariation = 5;
-    public int minDiversity = 5;
-    public int maxEvolution = 5;
-    public int areaThreshold = 5;
-    public int minMargin = 0;
-    public int edgeBlurSize = 0;
-
-    public static int MERGE_WORDS = -2;
-    public static int MERGE_CHARS = 1;
+    public static final int MERGE_WORDS = -2;
+    public static final int MERGE_CHARS = 1;
 
     public double resizeRate = 0.3;
 
-    int roisize = 0;
 
     public ImageProcessor(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
@@ -53,9 +40,8 @@ public class ImageProcessor {
         this.image = Imgcodecs.imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
         if (image.height() == 0 || image.width() == 0)
             throw new IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = " + image.height() + ", width = " + image.width() + ".\n" +
-                    "Requested filepath: " + filename + ".");
-        this.regions = new ArrayList<>();
-        this.rect = new MatOfRect();
+                    "Requested filepath: " + filename + ", check it once again.");
+        this.regions = new MatOfRect();
         this.chars = new ArrayList<>();
     }
 
@@ -120,39 +106,19 @@ public class ImageProcessor {
         threshold();
     }
 
-    private void detectMSER() {
-        MSER mser = MSER.create(delta,
-                minArea,
-                maxArea,
-                maxVariation,
-                minDiversity,
-                maxEvolution,
-                areaThreshold,
-                minMargin,
-                edgeBlurSize);
-        mser.detectRegions(image, regions, rect);
-    }
-
-    private void drawROI() {
-        detectMSER();
-        List<Rect> rects = rect.toList();
+    private void drawRoi() {
+        List<Rect> rects = regions.toList();
 
         for (int i = 0; i < rects.size(); i++) {
 
             Rect rect = rects.get(i);
-
             if (Validator.isValidTextArea(rect)) {
                 rect = fixRect(rect, DEFAULT_REGION_PADDING);
-                //Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(92));
+
 
                 chars.add(rect);
-                roisize++;
             }
         }
-    }
-
-    public List<MatOfPoint> getRegions() {
-        return regions;
     }
 
     public Mat getImage() {
@@ -161,7 +127,7 @@ public class ImageProcessor {
 
     public List<Mat> getText() {
         preProcess();
-        drawROI();
+        drawRoi();
         return getMats();
     }
 
@@ -170,15 +136,9 @@ public class ImageProcessor {
 
         Mat source;
 
-        //Size outputSize = new Size(9, 18);
-
         for (int i = 0; i < chars.size(); i++) {
             Rect rect = chars.get(i);
-
-            Mat temp = new Mat();
             source = image.submat(rect);
-
-            //Imgproc.resize(source, temp, outputSize);
 
             returnList.add(source);
         }
@@ -266,8 +226,9 @@ public class ImageProcessor {
         contours.removeIf((mat) -> image.height() - mat.height() < 200);
         contours.removeIf((mat) -> mat.size().area() < 7);
 
-
         chars = mergeRects(contours, mergeType);
+
+        chars = mergeCloseRects(chars);
 
         for (int i = 0; i < hiech.width(); i++) {
             hiech.get(0, i);
@@ -295,6 +256,26 @@ public class ImageProcessor {
         return result;
     }
 
+    public List<Rect> mergeCloseRects(List<Rect> rects) {
+        List<Rect> mergedRects = new ArrayList<>();
+
+        for (Rect rect : rects) {
+            for (Rect otherRect : rects) {
+                if (Math.abs(rect.y - otherRect.y) < 2)
+                    mergedRects.add(Validator.merge(rect, otherRect));
+            }
+        }
+
+        return mergedRects;
+    }
+
+    private void drawRects(List<Rect> rects) {
+        for (Rect rect :
+                rects) {
+            Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(255), 1);
+        }
+    }
+
     //TODO figure out word segmentation
     public List<Rect> oldMergeWords() {
         List<Rect> result = new ArrayList<>();
@@ -307,13 +288,13 @@ public class ImageProcessor {
 
 
         int currentLabel = 0;
-        for (int i = 1; i < totalLabels; i ++) {
+        for (int i = 1; i < totalLabels; i++) {
 
             Rect rect = new Rect(
-                    (int)stats.get(i, 0)[0],
-                    (int)stats.get(i, 1)[0],
-                    (int)stats.get(i, 2)[0],
-                    (int)stats.get(i, 3)[0]);
+                    (int) stats.get(i, 0)[0],
+                    (int) stats.get(i, 1)[0],
+                    (int) stats.get(i, 2)[0],
+                    (int) stats.get(i, 3)[0]);
         }
 
         File file = new File("label.dump");
