@@ -27,8 +27,8 @@
             <url>http://dl.bintray.com/ihmcrobotics/maven-vendor</url>
         </repository>
         <repository>
-            <id>local-repo</id>
-            <url>file://${basedir}/3dparty</url>
+            <id>opencv</id>
+            <url>https://rawgit.com/sshaddicts/opencv/repository</url>
         </repository>
     </repositories>
 
@@ -110,7 +110,7 @@
         </dependency>
 
         <dependency>
-            <groupId>local.3rdparty</groupId>
+            <groupId>sshaddicts.opencv</groupId>
             <artifactId>opencv</artifactId>
             <version>3.2.0</version>
         </dependency>
