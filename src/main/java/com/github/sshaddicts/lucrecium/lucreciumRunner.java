@@ -15,8 +15,6 @@ import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.dataset.DataSet;
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 
 import java.awt.*;
 import java.io.IOException;
@@ -32,6 +30,8 @@ public class lucreciumRunner {
     public static String NETWORK_DATA_DIR = "test_kek";
 
     public static void main(String[] args) {
+
+        System.out.println(System.getProperty("java.library.path"));
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
         Validator.MIN_AREA_THRESHOLD = 5;
