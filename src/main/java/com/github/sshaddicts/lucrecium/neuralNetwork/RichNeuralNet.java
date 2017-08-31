@@ -34,10 +34,10 @@ public class RichNeuralNet {
 
     MultiLayerNetwork network;
 
-    private int classNumber = 2;
+    private int outputLabelCount = 2;
 
-    public RichNeuralNet(int classNumber) {
-        this.classNumber = classNumber;
+    public RichNeuralNet(int outputLabelCount) {
+        this.outputLabelCount = outputLabelCount;
     }
 
     public MultiLayerNetwork getNet() {
@@ -71,7 +71,7 @@ public class RichNeuralNet {
                 .layer(2, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD) //create hidden layer
                         .activation(Activation.SOFTMAX)
                         .nIn(100)
-                        .nOut(classNumber)
+                        .nOut(outputLabelCount)
                         .build())
                 .setInputType(InputType.convolutionalFlat(numRows, numCols, 1))
                 .pretrain(false).backprop(true) //use backpropagation to adjust weights
@@ -87,27 +87,22 @@ public class RichNeuralNet {
 
     public void eval(INDArray input, INDArray actual) {
         INDArray output = network.output(input);
-        eval = new Evaluation(classNumber);
         eval.eval(actual, output);
     }
 
-    public void printStats() {
-        System.out.println(eval.stats());
+    public String getStats() {
+        return eval.stats();
     }
 
-    public static void saveNetwork(MultiLayerNetwork net, String filename) {
+    public void saveNetwork(String filename) {
         try {
-            ModelSerializer.writeModel(net, filename, true);
+            ModelSerializer.writeModel(network, filename, true);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static MultiLayerNetwork loadNetwork(String filename) throws IOException {
-
-        MultiLayerNetwork multiLayerNetwork = ModelSerializer.restoreMultiLayerNetwork(filename);
-
-        return multiLayerNetwork;
-
+    public MultiLayerNetwork loadNetwork(String filename) throws IOException {
+        return ModelSerializer.restoreMultiLayerNetwork(filename);
     }
 }

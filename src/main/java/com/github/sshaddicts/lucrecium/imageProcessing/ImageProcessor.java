@@ -3,6 +3,8 @@ package com.github.sshaddicts.lucrecium.imageProcessing;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,7 @@ public class ImageProcessor {
 
     public double resizeRate = 0.3;
 
+    Logger log = LoggerFactory.getLogger(this.getClass());
 
     public ImageProcessor(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
@@ -32,7 +35,8 @@ public class ImageProcessor {
 
         this.image = Imgcodecs.imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
         if (image.height() == 0 || image.width() == 0)
-            throw new IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = " + image.height() + ", width = " + image.width() + ".\n" +
+            throw new IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = "
+                    + image.height() + ", width = " + image.width() + ".\n" +
                     "Requested filepath: " + filename + ", check it once again.");
         this.regions = new MatOfRect();
         this.chars = new ArrayList<>();
@@ -40,7 +44,9 @@ public class ImageProcessor {
 
     private void threshold() {
         Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
-        Imgproc.adaptiveThreshold(image, tempMat, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 7, 5);
+        Imgproc.adaptiveThreshold(image, tempMat, 255,
+                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+                Imgproc.THRESH_BINARY, 7, 5);
         image = tempMat;
     }
 
@@ -58,9 +64,9 @@ public class ImageProcessor {
             }
         Mat tempMat = new Mat(image.height(), image.width(), image.type());
 
-        double height, width;
-        height = image.height() * resizeRate;
-        width = image.width() * resizeRate;
+        double height = image.height() * resizeRate;
+        double width = image.width() * resizeRate;
+
         Imgproc.resize(image, tempMat, new Size(width, height));
         image = tempMat;
     }
@@ -92,31 +98,13 @@ public class ImageProcessor {
         image = result;
     }
 
-    private void preProcess() {
-        blur();
-        cropImage();
-        resize();
-        threshold();
-    }
-
-    private void drawRoi() {
-        List<Rect> rects = regions.toList();
-
-        for (Rect rect : rects) {
-            if (Validator.isValidCharArea(rect)) {
-                rect = fixRect(rect, DEFAULT_REGION_PADDING);
-                chars.add(rect);
-            }
-        }
-    }
-
     public Mat getImage() {
         return image;
     }
 
-    public List<Mat> getText() {
-        preProcess();
-        drawRoi();
+    public List<Mat> getText(int mergeType) {
+        computeSkewAndProcess();
+        detectText(mergeType);
         return getMats();
     }
 
@@ -148,10 +136,6 @@ public class ImageProcessor {
 
     }
 
-    public boolean save(String filename) {
-        return Imgcodecs.imwrite(filename, image);
-    }
-
     private Mat deskew(Mat src, double angle) {
         Point center = new Point(src.width() / 2, src.height() / 2);
         Mat rotatedImage = Imgproc.getRotationMatrix2D(center, angle, 1.0);
@@ -176,8 +160,8 @@ public class ImageProcessor {
 
         Core.bitwise_and(image, mask, tmpMat);
 
-        //Imgproc.GaussianBlur(image, tmpMat, new Size(1,1), 0);
-        Imgproc.adaptiveThreshold(tmpMat, image, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+        Imgproc.adaptiveThreshold(tmpMat, image, 255,
+                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
                 Imgproc.THRESH_BINARY_INV, 11, 12);
 
         //get minimal rotated rect
@@ -192,8 +176,6 @@ public class ImageProcessor {
 
         if (rotated.size.width > rotated.size.height)
             rotated.angle += 90.f;
-
-        System.out.println(rotated.angle);
 
         image = deskew(image, rotated.angle);
 
@@ -219,11 +201,7 @@ public class ImageProcessor {
 
         Mat temp = new Mat(image.size(), image.type());
 
-        System.out.println(image.type());
-        Core.invert(image, temp);
-
         drawRects(temp, chars);
-        Imshow.show(temp);
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -277,7 +255,9 @@ public class ImageProcessor {
         Mat tmp = new Mat();
         blur();
 
-        Imgproc.adaptiveThreshold(image, tmp, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 111, 3);
+        Imgproc.adaptiveThreshold(image, tmp, 255,
+                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+                Imgproc.THRESH_BINARY, 111, 3);
 
         Mat kernel = Mat.ones(new Size(5, 5), CvType.CV_8UC1);
 

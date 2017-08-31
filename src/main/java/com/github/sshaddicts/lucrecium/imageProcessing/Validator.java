@@ -9,10 +9,8 @@ import org.opencv.core.Rect;
 //TODO: remove this one
 public class Validator {
 
-    public static double MAX_AREA_THRESHOLD = 1000;
-    public static double MIN_AREA_THRESHOLD = 25;
-    public static double ASPECT_RATIO = 2 / 1;
-    public static double MIN_ASPECT_RATIO = 1;
+    public static final double MAX_AREA_THRESHOLD = 1000;
+    public static final double ASPECT_RATIO = 2;
 
     static boolean isValidCharArea(Rect rect) {
         if (rect.height < 15 || rect.width == 0)

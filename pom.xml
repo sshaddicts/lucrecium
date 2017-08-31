@@ -33,6 +33,9 @@
     </repositories>
 
     <build>
+
+        <testSourceDirectory>${basedir}/src/test</testSourceDirectory>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -50,8 +53,11 @@
                     <argLine>-Djava.library.path=${java.library.path}</argLine>
 
                     <includes>
-                        <include>**/**</include>
+                        <include>**/*Tests.java</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/NeuralNetTests.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
 

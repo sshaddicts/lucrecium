@@ -27,7 +27,7 @@ public class ImageDataSet {
     DataSetIterator iterator;
 
     private int batchSize = 20;
-    private int numberOfClasses = 76;
+    private int outputLabelCount = 76;
 
     public ImageDataSet(String parentDir, int classNumber, int batchSize) {
         File parentDirectory = new File(parentDir);
@@ -40,10 +40,10 @@ public class ImageDataSet {
         this.recordReader = new ImageRecordReader(18, 9, 1, labelMarker);
         this.pathFilter = new BalancedPathFilter(new Random(), allowedExtensions, labelMarker);
 
-        this.numberOfClasses = classNumber;
+        this.outputLabelCount = classNumber;
         this.batchSize = batchSize;
 
-        this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, numberOfClasses);
+        this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, outputLabelCount);
 
         iterator.setPreProcessor(new ImageFlatteningDataSetPreProcessor());
 
