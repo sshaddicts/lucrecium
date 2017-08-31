@@ -3,7 +3,10 @@ language: java
 addons:
   apt:
     sources: [ 'ubuntu-toolchain-r-test']
-    packages: ['libstdc++6']
+    packages:
+      - libstdc++6
+      - libstdc++-4.9-dev
+
 
 install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
