@@ -1,22 +1,14 @@
 package com.github.sshaddicts.lucrecium.imageProcessing;
 
-
-import org.apache.commons.io.FileUtils;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Created by Alex on 29.07.2017.
- */
-//TODO rewrite symbol detection
+
 public class ImageProcessor {
 
     private Mat image;
@@ -26,7 +18,8 @@ public class ImageProcessor {
     private List<Rect> lines;
     public static final int DEFAULT_REGION_PADDING = 1;
 
-    public static final int MERGE_WORDS = -2;
+    public static final int MERGE_WORDS = -3;
+    public static final int MERGE_LINES = -20;
     public static final int MERGE_CHARS = 1;
 
     public double resizeRate = 0.3;
@@ -99,7 +92,7 @@ public class ImageProcessor {
         image = result;
     }
 
-    public void preProcess() {
+    private void preProcess() {
         blur();
         cropImage();
         resize();
@@ -109,13 +102,9 @@ public class ImageProcessor {
     private void drawRoi() {
         List<Rect> rects = regions.toList();
 
-        for (int i = 0; i < rects.size(); i++) {
-
-            Rect rect = rects.get(i);
-            if (Validator.isValidTextArea(rect)) {
+        for (Rect rect : rects) {
+            if (Validator.isValidCharArea(rect)) {
                 rect = fixRect(rect, DEFAULT_REGION_PADDING);
-
-
                 chars.add(rect);
             }
         }
@@ -131,15 +120,13 @@ public class ImageProcessor {
         return getMats();
     }
 
-    public List<Mat> getMats() {
+    private List<Mat> getMats() {
         List<Mat> returnList = new ArrayList<>();
 
         Mat source;
 
-        for (int i = 0; i < chars.size(); i++) {
-            Rect rect = chars.get(i);
+        for (Rect rect : chars) {
             source = image.submat(rect);
-
             returnList.add(source);
         }
 
@@ -165,7 +152,7 @@ public class ImageProcessor {
         return Imgcodecs.imwrite(filename, image);
     }
 
-    public Mat deskew(Mat src, double angle) {
+    private Mat deskew(Mat src, double angle) {
         Point center = new Point(src.width() / 2, src.height() / 2);
         Mat rotatedImage = Imgproc.getRotationMatrix2D(center, angle, 1.0);
 
@@ -226,21 +213,25 @@ public class ImageProcessor {
         contours.removeIf((mat) -> image.height() - mat.height() < 200);
         contours.removeIf((mat) -> mat.size().area() < 7);
 
-        chars = mergeRects(contours, mergeType);
+        chars = mergeInnerRects(contours, mergeType);
 
         chars = mergeCloseRects(chars);
 
-        for (int i = 0; i < hiech.width(); i++) {
-            hiech.get(0, i);
-        }
+        Mat temp = new Mat(image.size(), image.type());
+
+        System.out.println(image.type());
+        Core.invert(image, temp);
+
+        drawRects(temp, chars);
+        Imshow.show(temp);
     }
 
-    public List<Rect> mergeRects(List<MatOfPoint> points, int mergeType) {
+    private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
         List<Rect> result = new ArrayList<>();
         Mat mask = Mat.zeros(image.size(), image.type());
 
-        for (int i = 0; i < points.size(); i++) {
-            Rect rect = Imgproc.boundingRect(points.get(i));
+        for (MatOfPoint point : points) {
+            Rect rect = Imgproc.boundingRect(point);
             rect.width -= mergeType;
             Imgproc.rectangle(mask, rect.tl(), rect.br(), new Scalar(255), -1);
         }
@@ -256,12 +247,14 @@ public class ImageProcessor {
         return result;
     }
 
-    public List<Rect> mergeCloseRects(List<Rect> rects) {
+    private List<Rect> mergeCloseRects(List<Rect> rects) {
         List<Rect> mergedRects = new ArrayList<>();
 
-        for (Rect rect : rects) {
-            for (Rect otherRect : rects) {
-                if (Math.abs(rect.y - otherRect.y) < 2)
+        for (int i = 0; i < rects.size(); i++) {
+            Rect rect = rects.get(i);
+            for (int j = i; j < rects.size(); j++) {
+                Rect otherRect = rects.get(j);
+                if (Math.abs((rect.y + rect.height / 2) - (otherRect.y + otherRect.height / 2)) < 1)
                     mergedRects.add(Validator.merge(rect, otherRect));
             }
         }
@@ -269,42 +262,31 @@ public class ImageProcessor {
         return mergedRects;
     }
 
-    private void drawRects(List<Rect> rects) {
+
+    private void drawRects(Mat image, List<Rect> rects) {
         for (Rect rect :
                 rects) {
             Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(255), 1);
         }
     }
 
-    //TODO figure out word segmentation
-    public List<Rect> oldMergeWords() {
-        List<Rect> result = new ArrayList<>();
+    public Mat experimentalProcessing() {
 
+        resize();
 
-        Mat labels = new Mat();
-        Mat stats = new Mat();
-        Mat centroids = new Mat();
-        int totalLabels = Imgproc.connectedComponentsWithStats(image, labels, stats, centroids);
+        Mat tmp = new Mat();
+        blur();
 
+        Imgproc.adaptiveThreshold(image, tmp, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 111, 3);
 
-        int currentLabel = 0;
-        for (int i = 1; i < totalLabels; i++) {
+        Mat kernel = Mat.ones(new Size(5, 5), CvType.CV_8UC1);
 
-            Rect rect = new Rect(
-                    (int) stats.get(i, 0)[0],
-                    (int) stats.get(i, 1)[0],
-                    (int) stats.get(i, 2)[0],
-                    (int) stats.get(i, 3)[0]);
-        }
+        Mat opening = new Mat();
+        Mat closing = new Mat();
 
-        File file = new File("label.dump");
+        Imgproc.morphologyEx(tmp, opening, Imgproc.MORPH_OPEN, kernel);
+        Imgproc.morphologyEx(opening, closing, Imgproc.MORPH_CLOSE, kernel);
 
-        try {
-            FileUtils.write(file, labels.dump(), Charset.defaultCharset());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return result;
+        return closing;
     }
 }

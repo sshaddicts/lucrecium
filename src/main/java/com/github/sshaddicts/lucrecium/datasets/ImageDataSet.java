@@ -8,12 +8,13 @@ import org.datavec.image.recordreader.ImageRecordReader;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.preprocessor.ImageFlatteningDataSetPreProcessor;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-public class ImageDataSet{
+public class ImageDataSet {
 
     ImageRecordReader recordReader;
     FileSplit fileSplit;
@@ -44,6 +45,8 @@ public class ImageDataSet{
 
         this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, numberOfClasses);
 
+        iterator.setPreProcessor(new ImageFlatteningDataSetPreProcessor());
+
         try {
             recordReader.initialize(fileSplit);
         } catch (IOException e) {
@@ -62,15 +65,15 @@ public class ImageDataSet{
         return iterator.next();
     }
 
-    public boolean hasNext(){
+    public boolean hasNext() {
         return iterator.hasNext();
     }
 
-    public void resetIterator(){
+    public void resetIterator() {
         iterator.reset();
     }
 
-    public DataSetIterator getIterator(){
+    public DataSetIterator getIterator() {
         return iterator;
     }
 

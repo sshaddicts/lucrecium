@@ -1,11 +1,7 @@
-neuralnet_data/
 target/
-test_data/
-testImages/
+dataSources/
+testData/
+outputData/
 .idea/
-real_data/
-cropped_images/
-mser_data/
 util/
 *.iml
-testingData/

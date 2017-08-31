@@ -6,32 +6,32 @@ import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.imageProcessing.Imshow;
 import com.github.sshaddicts.lucrecium.imageProcessing.Validator;
 import com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet;
-import com.github.sshaddicts.lucrecium.util.FileInteractions;
 import org.deeplearning4j.api.storage.StatsStorage;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
-import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.opencv.core.Core;
 
 import java.awt.*;
 import java.io.IOException;
 
+import static com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet.loadNetwork;
+import static com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet.saveNetwork;
+
 
 public class lucreciumRunner {
 
-    public final static int PICTURE_NUMBER = 7;
-    public final static int CLASS_NUMBER = 10;
-    public final static int BATCH_SIZE = 30;
-    public final static int NUMBER_OF_EPOCHS = 1000;
+    private final static int PICTURE_NUMBER = 2;
+    private final static int CLASS_NUMBER = 10;
+    private final static int BATCH_SIZE = 30;
+    private final static int NUMBER_OF_EPOCHS = 1000;
 
-    public static String NETWORK_DATA_DIR = "test_kek";
+    private static String NETWORK_DATA_DIR = "test_kek";
 
     public static void main(String[] args) {
-
-        System.out.println(System.getProperty("java.library.path"));
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
         Validator.MIN_AREA_THRESHOLD = 5;
@@ -40,19 +40,25 @@ public class lucreciumRunner {
         Validator.MIN_ASPECT_RATIO = 1 / 2;
 
 
-        Imshow newShow = new Imshow("character detecting");
-        ImageProcessor processor = new ImageProcessor(DummyDataSet.oldData[PICTURE_NUMBER]);
-        //ImageProcessor processor = new ImageProcessor("real_data/skew_data/skew_good.jpg");
-
-        processor.computeSkewAndProcess();
-        processor.detectText(ImageProcessor.MERGE_WORDS);
-        newShow.showImage(processor.getImage());
-
-        FileInteractions.saveMats(processor.getMats());
+        testNetwork();
     }
 
-    public static void testSavedNetwork(){
-        RichNeuralNet network = new RichNeuralNet();
+    public static void testImageProcessing() {
+        Imshow newShow = new Imshow("kinda new processing");
+        Imshow shower = new Imshow("experimental processing");
+        ImageProcessor processor = new ImageProcessor(DummyDataSet.oldData[PICTURE_NUMBER]);
+        ImageProcessor expProc = new ImageProcessor(DummyDataSet.oldData[PICTURE_NUMBER]);
+
+        processor.computeSkewAndProcess();
+        processor.detectText(ImageProcessor.MERGE_CHARS);
+        newShow.showImage(processor.getImage());
+
+        shower.showImage(expProc.experimentalProcessing());
+
+    }
+
+    public static void testSavedNetwork() {
+        RichNeuralNet network = new RichNeuralNet(CLASS_NUMBER);
 
         try {
             network.init(loadNetwork("netFile"));
@@ -62,7 +68,7 @@ public class lucreciumRunner {
 
         ImageDataSet dataset = new ImageDataSet(NETWORK_DATA_DIR, CLASS_NUMBER, BATCH_SIZE);
 
-        while(dataset.hasNext()){
+        while (dataset.hasNext()) {
             DataSet next = dataset.next();
 
             network.eval(next.getFeatureMatrix(), next.getLabels());
@@ -74,8 +80,16 @@ public class lucreciumRunner {
     public static void testNetwork() {
         ImageDataSet dataSet = new ImageDataSet(NETWORK_DATA_DIR, CLASS_NUMBER, BATCH_SIZE);
 
-        RichNeuralNet net = new RichNeuralNet();
-        net.init(18 * 9, 10, 10, CLASS_NUMBER);
+        DataSetIterator iter = null;
+        try {
+            iter = new MnistDataSetIterator(128, 10);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        RichNeuralNet net = new RichNeuralNet(CLASS_NUMBER);
+        net.init(28, 28);
+
 
         UIServer uiServer = UIServer.getInstance();
         StatsStorage statsStorage = new InMemoryStatsStorage();
@@ -83,9 +97,8 @@ public class lucreciumRunner {
         net.getNet().setListeners(new StatsListener(statsStorage));
 
         for (int i = 0; i < NUMBER_OF_EPOCHS; i++) {
-            net.train(dataSet.getIterator());
+            net.train(iter);
         }
-
 
         Toolkit.getDefaultToolkit().beep();
         try {
@@ -98,27 +111,4 @@ public class lucreciumRunner {
 
         saveNetwork(net.getNet(), "netFile");
     }
-
-    public static void saveNetwork(MultiLayerNetwork net, String filename) {
-        try {
-            ModelSerializer.writeModel(net, filename, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static MultiLayerNetwork loadNetwork(String filename) throws IOException {
-
-        MultiLayerNetwork multiLayerNetwork = ModelSerializer.restoreMultiLayerNetwork(filename);
-
-        return multiLayerNetwork;
-
-    }
-
-    public static void saveCroppedImage() {
-        ImageProcessor processor = new ImageProcessor(DummyDataSet.realData[PICTURE_NUMBER]);
-        processor.preProcess();
-        processor.save("file_" + System.currentTimeMillis() + ".png");
-    }
-
 }
