@@ -3,7 +3,7 @@ language: java
 sudo: required
 
 install:
-  - apt-get install libstdc++6
+  - sudo apt-get install libstdc++6
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
 
 cache:
