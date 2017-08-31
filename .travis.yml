@@ -1,14 +1,12 @@
 language: java
 
-addons:
-  apt:
-    sources: [ 'ubuntu-toolchain-r-test']
-    packages:
-      - libstdc++6
-      - libstdc++-4.9-dev
+sudo: required
 
 
 install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update
+  - sudo apt-get install libstdc++-4.9-dev
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
 
 cache:
