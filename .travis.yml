@@ -1,9 +1,11 @@
 language: java
 
-sudo: required
+addons:
+  apt:
+    sources: [ 'ubuntu-toolchain-r-test']
+    packages: ['libstdc++6']
 
 install:
-  - sudo apt-get install libstdc++6
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
 
 cache:
