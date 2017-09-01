@@ -8,7 +8,7 @@ if [[ $mode == "travis" ]];
 then
     #sudo mkdir -p /usr/lib
     #sudo mv libopencv_java320.so /usr/lib/libopencv_java320.so
-else
+#else
     sudo mkdir -p /usr/lib/jni
     sudo mv libopencv_java320.so /usr/lib/jni/libopencv_java320.so
 fi
