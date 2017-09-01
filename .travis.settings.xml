@@ -20,5 +20,13 @@
     <activeProfiles>
         <activeProfile>bintray</activeProfile>
     </activeProfiles>
+
+    <servers>
+        <server>
+            <id>bintray-sshaddicts-lucrecium</id>
+            <username>topin212</username>
+            <password>${env.API_KEY}</password>
+        </server>
+    </servers>
 </settings>
 
