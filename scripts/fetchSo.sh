@@ -6,10 +6,8 @@ wget https://raw.githubusercontent.com/sshaddicts/opencv/repository/libopencv_ja
 
 if [[ $mode == "travis" ]];
 then
-    sudo mkdir -p /usr/lib
-    sudo mv libopencv_java320.so /usr/lib/libopencv_java320.so
-
-    ls /usr/lib | grep opencv_
+    #sudo mkdir -p /usr/lib
+    #sudo mv libopencv_java320.so /usr/lib/libopencv_java320.so
 else
     sudo mkdir -p /usr/lib/jni
     sudo mv libopencv_java320.so /usr/lib/jni/libopencv_java320.so

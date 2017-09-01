@@ -2,11 +2,6 @@ language: java
 
 sudo: required
 
-addons:
-  apt:
-    sources: [ 'ubuntu-toolchain-r-test']
-    packages: ['libstdc++6']
-
 install:
   - bash scripts/fetchSo.sh travis
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
