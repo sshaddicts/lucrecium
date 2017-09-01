@@ -2,7 +2,7 @@
 
 mode=${1}
 
-echo wget https://raw.githubusercontent.com/sshaddicts/opencv/repository/libopencv_java320.so
+wget https://raw.githubusercontent.com/sshaddicts/opencv/repository/libopencv_java320.so
 
 if [[ $mode == "travis" ]];
 then
