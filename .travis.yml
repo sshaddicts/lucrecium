@@ -3,6 +3,7 @@ language: java
 sudo: required
 
 install:
+  - bash scripts/travisPreBuild
   - bash scripts/fetchSo.sh travis
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
 

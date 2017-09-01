@@ -1,7 +1,7 @@
 #!/bin/bash
 
-wget http://security.ubuntu.com/ubuntu/pool/main/g/gcc-5/libstdc++6_5.4.0-6ubuntu1~16.04.4_amd64.deb
+wget http://security.ubuntu.com/ubuntu/pool/universe/liba/libav/libavcodec-extra-54_9.20-0ubuntu0.14.04.1_amd64.deb
 
-sudo dpkg -i libstdc++6_5.4.0-6ubuntu1~16.04.4_amd64.deb
+sudo dpkg -i libavcodec-extra-54_9.20-0ubuntu0.14.04.1_amd64.deb
 
-rm libstdc++6_5.4.0-6ubuntu1~16.04.4_amd64.deb
+rm libavcodec-extra-54_9.20-0ubuntu0.14.04.1_amd64.deb
