@@ -14,7 +14,6 @@
         <nd4j.version>0.9.1</nd4j.version>
         <dl4j.version>0.9.1</dl4j.version>
         <nd4j.backend>nd4j-cuda-8.0-platform</nd4j.backend>
-        <java.library.path>${basedir}/3dparty</java.library.path>
     </properties>
 
     <repositories>
@@ -67,7 +66,7 @@
                 <version>1.4.0</version>
 
                 <configuration>
-                    <mainClass>com.github.sshaddicts.lucrecium.lucreciumRunner</mainClass>
+                    <mainClass>com.github.sshaddicts.lucrecium.runner</mainClass>
                 </configuration>
             </plugin>
         </plugins>
