@@ -1,11 +1,8 @@
-neuralnet_data/
+runnercl/
 target/
-test_data/
-testImages/
+dataSources/
+testData/
+outputData/
 .idea/
-real_data/
-cropped_images/
-mser_data/
 util/
 *.iml
-

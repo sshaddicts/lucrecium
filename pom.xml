@@ -4,11 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.github.sshaddicts.lucrecium</groupId>
+    <artifactId>lucrecium-core</artifactId>
+    <version>0.0.2</version>
+
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <nd4j.version>0.9.1</nd4j.version>
-        <nd4j.backend>nd4j-cuda-8.0-platform</nd4j.backend>
+        <dl4j.version>0.9.1</dl4j.version>
+        <nd4j.backend>nd4j-native-platform</nd4j.backend>
     </properties>
 
     <repositories>
@@ -20,12 +25,44 @@
             <name>bintray</name>
             <url>http://dl.bintray.com/ihmcrobotics/maven-vendor</url>
         </repository>
+        <repository>
+            <id>opencv</id>
+            <url>https://rawgit.com/sshaddicts/opencv/repository</url>
+        </repository>
     </repositories>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray-sshaddicts-lucrecium</id>
+            <name>topin212</name>
+            <url>https://api.bintray.com/maven/sshaddicts/lucrecium/lucrecium-core/;publish=1</url>
+        </repository>
+    </distributionManagement>
 
-    <groupId>com.topin212</groupId>
-    <artifactId>imageprocessor-opencv</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <build>
+        <testSourceDirectory>${basedir}/src/test</testSourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.5.2</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20</version>
+
+
+                <configuration>
+                    <includes>
+                        <include>**/*Tests</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
@@ -33,13 +70,6 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.5</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.googlecode.efficient-java-matrix-library/ejml -->
-        <dependency>
-            <groupId>com.googlecode.efficient-java-matrix-library</groupId>
-            <artifactId>ejml</artifactId>
-            <version>0.25</version>
         </dependency>
 
         <dependency>
@@ -62,21 +92,25 @@
             <version>${nd4j.version}</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.25</version>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-ui_2.10</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-slf4j-impl -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.8.2</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
+            <groupId>sshaddicts.opencv</groupId>
+            <artifactId>opencv</artifactId>
+            <version>3.2.0</version>
         </dependency>
-
 
 
         <!-- https://mvnrepository.com/artifact/jfree/jfreechart -->

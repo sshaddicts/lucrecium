@@ -1,0 +1,39 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+
+
+    working_directory: ~/lucrecium
+
+    environment:
+      MAVEN_OPTS: -Xmx3200m
+    
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "pom.xml" }}
+          - v1-dependencies-
+
+      - run: mvn dependency:go-offline
+
+      - run: bash ~/lucrecium/scripts/fetchSo.sh
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+        
+
+      - run: mvn install
+
+      - run: mvn test -B
+
+      - store_test_results:
+          path: target/surefire-reports
+      
+      - store_artifacts:
+          path: target/lucrecium-core-0.0.2.jar

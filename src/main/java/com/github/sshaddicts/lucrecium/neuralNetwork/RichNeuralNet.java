@@ -1,96 +1,113 @@
 package com.github.sshaddicts.lucrecium.neuralNetwork;
 
-import org.deeplearning4j.nn.api.Layer;
+import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
+import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.util.ModelSerializer;
+import org.jfree.util.Log;
 import org.nd4j.linalg.activations.Activation;
-import org.nd4j.linalg.dataset.DataSet;
-import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.learning.config.Nesterovs;
+import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class RichNeuralNet {
-    private int ITERATIONS = 10000;
-    private double LEARNING_RATE = 0.1;
+import java.io.IOException;
 
-    private boolean USE_DROP_CONNECT = false;
-    private boolean MINI_BATCH = false;
-    private boolean PRETRAIN = false;
-    private boolean BACKPROP = true;
-    private Activation ACTIVATION_FUNC = Activation.SIGMOID;
 
-    private DataSet data;
+public class RichNeuralNet{
+    private final int ITERATIONS = 1;
+    private final double LEARNING_RATE = 0.006;
 
-    public void setData(DataSet data) {
-        this.data = data;
-    }
+    private final boolean USE_DROP_CONNECT = false;
+    private final boolean MINI_BATCH = false;
+    private final boolean PRETRAIN = false;
+    private final boolean BACKPROP = true;
+    private final Activation ACTIVATION_FUNC = Activation.RELU;
+    private final boolean REGULARIZATION = true;
 
-    NeuralNetConfiguration conf;
-    MultiLayerConfiguration multilayerConf;
+    private Evaluation eval = new Evaluation();
+
     MultiLayerNetwork network;
 
-    private int layers = 0;
+    private int outputLabelCount = 2;
+
+    Logger log = LoggerFactory.getLogger(this.getClass());
+
+    public RichNeuralNet(int outputLabelCount) {
+        this.outputLabelCount = outputLabelCount;
+    }
 
     public MultiLayerNetwork getNet() {
         return network;
     }
 
-    public void addLayer(Layer layer){
+    public void init(MultiLayerNetwork net) {
+        this.network = net;
     }
 
-    public void init(int inputSize, int hiddenNumber, int hiddenSize, int classNumber) {
-        layers = hiddenNumber + 1;
-        NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
+    public void init(int numRows, int numCols) {
+        Log.debug(String.format("using %d as input size", numRows * numCols));
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(123)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .iterations(1)
+                .activation(Activation.RELU)
+                .weightInit(WeightInit.XAVIER)
+                .learningRate(LEARNING_RATE)
+                .updater(new Nesterovs(0.98))
+                .regularization(true).l2(LEARNING_RATE * 0.005)
+                .list()
+                .layer(0, new DenseLayer.Builder()
+                        .nIn(numRows * numCols)
+                        .nOut(500)
+                        .build())
+                .layer(1, new DenseLayer.Builder()
+                        .nIn(500)
+                        .nOut(100)
+                        .build())
+                .layer(2, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .activation(Activation.SOFTMAX)
+                        .nIn(100)
+                        .nOut(outputLabelCount)
+                        .build())
+                .setInputType(InputType.convolutionalFlat(numRows, numCols, 1))
+                .pretrain(false).backprop(true)
+                .build();
 
-        builder.iterations(ITERATIONS);
-        builder.learningRate(LEARNING_RATE);
-        builder.useDropConnect(USE_DROP_CONNECT);
-        builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
-
-        builder.biasInit(0);
-        builder.miniBatch(MINI_BATCH);
-
-        NeuralNetConfiguration.ListBuilder listBuilder = builder.list();
-
-        listBuilder.layer(0, configureLayer(inputSize, hiddenSize));
-
-        for (int i = 1; i < layers - 1; i++) {
-            listBuilder.layer(i, configureLayer(hiddenSize, hiddenSize));
-        }
-
-        OutputLayer.Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD);
-
-        outputLayerBuilder.nIn(hiddenSize);
-        outputLayerBuilder.nOut(classNumber);
-
-        outputLayerBuilder.activation(Activation.SOFTMAX);
-        outputLayerBuilder.weightInit(WeightInit.DISTRIBUTION);
-        outputLayerBuilder.dist(new UniformDistribution(0, 1));
-        listBuilder.layer(layers - 1, outputLayerBuilder.build());
-
-        listBuilder.pretrain(PRETRAIN);
-        listBuilder.backprop(BACKPROP);
-
-        multilayerConf = listBuilder.build();
-        network = new MultiLayerNetwork(multilayerConf);
+        network = new MultiLayerNetwork(conf);
+        network.init();
     }
 
-    public void train() {
+    public void train(DataSetIterator data) {
         network.fit(data);
     }
 
-    public DenseLayer configureLayer(int nIn, int nOut) {
-        DenseLayer.Builder hiddenLayerBuilder = new DenseLayer.Builder();
-        hiddenLayerBuilder.nIn(nIn);
-        hiddenLayerBuilder.nOut(nOut);
-        hiddenLayerBuilder.activation(ACTIVATION_FUNC);
-        hiddenLayerBuilder.weightInit(WeightInit.DISTRIBUTION);
-        hiddenLayerBuilder.dist(new UniformDistribution(0, 1));
+    public void eval(INDArray input, INDArray actual) {
+        INDArray output = network.output(input);
+        eval.eval(actual, output);
+    }
 
-        return hiddenLayerBuilder.build();
+    public String getStats() {
+        return eval.stats();
+    }
+
+    public void saveNetwork(String filename) {
+        try {
+            ModelSerializer.writeModel(network, filename, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public MultiLayerNetwork loadNetwork(String filename) throws IOException {
+        return ModelSerializer.restoreMultiLayerNetwork(filename);
     }
 }

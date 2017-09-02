@@ -1,0 +1,11 @@
+general:
+  branches:
+    only:
+      - master
+      - /feature-.*/
+
+deployment:
+  production:
+    branch: master
+    commands:
+      - mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .settings.xml

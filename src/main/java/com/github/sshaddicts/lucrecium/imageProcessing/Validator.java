@@ -3,33 +3,31 @@ package com.github.sshaddicts.lucrecium.imageProcessing;
 import org.opencv.core.Rect;
 
 
-/**
- * Created by Alex on 01.08.2017.
- */
-public class Validator {
+//TODO: remove this one
+class Validator {
 
-    public static double MAX_AREA_THRESHOLD;
-    public static double MIN_AREA_THRESHOLD;
-    public static double ASPECT_RATIO;
+    public static final double MAX_AREA_THRESHOLD = 1000;
+    public static final double ASPECT_RATIO = 2;
 
-    public static boolean isValidTextArea(Rect rect) {
+    static boolean isValidCharArea(Rect rect) {
+        if (rect.height < 15 || rect.width == 0)
+            return false;
 
-        //check size
-        boolean lessThanMaximum = rect.size().area() < MAX_AREA_THRESHOLD;
-        boolean biggerThanMinimum = rect.size().area() > MIN_AREA_THRESHOLD;
+        double area = rect.size().area();
+        boolean isValidArea = area < MAX_AREA_THRESHOLD;
 
-        //check aspect ratio
-        boolean aspectRatio = (rect.height / rect.width) < ASPECT_RATIO;
+        double realRatio = rect.height / rect.width;
+        boolean isValidAspectRatio = realRatio < ASPECT_RATIO;
 
-        return lessThanMaximum && biggerThanMinimum && aspectRatio;
+        return isValidArea && isValidAspectRatio;
     }
 
-    public static boolean isOverlapping(Rect rect1, Rect rect2) {
-        if(rect1 == rect2)
-            return true;
-        if (rect1.contains(rect2.tl()) || rect1.contains(rect2.br())) {
-            return true;
-        }
-        return false;
+    static Rect merge(Rect rect1, Rect rect2, int mergeType) {
+
+        return new Rect(Integer.min(rect1.x, rect2.x),
+                Integer.max(rect1.y, rect2.y),
+
+                Integer.max(rect1.width, rect2.width) + mergeType,
+                Integer.max(rect1.height, rect2.height));
     }
 }
