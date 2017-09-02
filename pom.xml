@@ -61,9 +61,6 @@
                     <includes>
                         <include>**/*Tests.java</include>
                     </includes>
-                    <excludes>
-                        <exclude>**/NeuralNetTests.java</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
 

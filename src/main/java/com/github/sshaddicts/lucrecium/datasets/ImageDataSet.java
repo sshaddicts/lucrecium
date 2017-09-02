@@ -9,6 +9,8 @@ import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.ImageFlatteningDataSetPreProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +30,8 @@ public class ImageDataSet {
 
     private final int batchSize;
     private final int outputLabelCount;
+
+    Logger log = LoggerFactory.getLogger(this.getClass());
 
     public ImageDataSet(String parentDir, int classNumber, int batchSize) {
         File parentDirectory = new File(parentDir);
@@ -50,7 +54,7 @@ public class ImageDataSet {
         try {
             recordReader.initialize(fileSplit);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
 
     }

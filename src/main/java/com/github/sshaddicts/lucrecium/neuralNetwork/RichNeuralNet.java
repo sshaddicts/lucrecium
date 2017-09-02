@@ -10,11 +10,14 @@ import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.ModelSerializer;
+import org.jfree.util.Log;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -36,6 +39,8 @@ public class RichNeuralNet{
 
     private int outputLabelCount = 2;
 
+    Logger log = LoggerFactory.getLogger(this.getClass());
+
     public RichNeuralNet(int outputLabelCount) {
         this.outputLabelCount = outputLabelCount;
     }
@@ -49,32 +54,32 @@ public class RichNeuralNet{
     }
 
     public void init(int numRows, int numCols) {
-        System.out.println(String.format("using %d as input size", numRows * numCols));
+        Log.debug(String.format("using %d as input size", numRows * numCols));
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123) //include a random seed for reproducibility
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT) // use stochastic gradient descent as an optimization algorithm
+                .seed(123)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .iterations(1)
                 .activation(Activation.RELU)
                 .weightInit(WeightInit.XAVIER)
-                .learningRate(LEARNING_RATE) //specify the learning rate
+                .learningRate(LEARNING_RATE)
                 .updater(new Nesterovs(0.98))
-                .regularization(true).l2(LEARNING_RATE * 0.005) // regularize learning model
+                .regularization(true).l2(LEARNING_RATE * 0.005)
                 .list()
-                .layer(0, new DenseLayer.Builder() //create the first input layer.
+                .layer(0, new DenseLayer.Builder()
                         .nIn(numRows * numCols)
                         .nOut(500)
                         .build())
-                .layer(1, new DenseLayer.Builder() //create the second input layer
+                .layer(1, new DenseLayer.Builder()
                         .nIn(500)
                         .nOut(100)
                         .build())
-                .layer(2, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD) //create hidden layer
+                .layer(2, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
                         .activation(Activation.SOFTMAX)
                         .nIn(100)
                         .nOut(outputLabelCount)
                         .build())
                 .setInputType(InputType.convolutionalFlat(numRows, numCols, 1))
-                .pretrain(false).backprop(true) //use backpropagation to adjust weights
+                .pretrain(false).backprop(true)
                 .build();
 
         network = new MultiLayerNetwork(conf);

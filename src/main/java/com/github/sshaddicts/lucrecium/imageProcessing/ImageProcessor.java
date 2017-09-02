@@ -57,11 +57,12 @@ public class ImageProcessor {
     }
 
     public void resize() {
-        if (image.height() == 0 || image.width() == 0)
-
+        if (image.height() == 0 || image.width() == 0) {
             if (image.height() < 500) {
                 resizeRate *= 2.5;
             }
+        }
+
         Mat tempMat = new Mat(image.height(), image.width(), image.type());
 
         double height = image.height() * resizeRate;
@@ -75,15 +76,16 @@ public class ImageProcessor {
         Mat tempMat = new Mat();
         List<MatOfPoint> countours = new ArrayList<>();
         Mat hierarchy = new Mat();
+
         int mode = Imgproc.RETR_LIST;
         int method = Imgproc.CHAIN_APPROX_SIMPLE;
+
         Imgproc.threshold(image, tempMat, 75, 255, CvType.CV_8UC1);
         Imgproc.findContours(tempMat, countours, hierarchy, mode, method);
 
         Mat result = new Mat();
 
-        for (Mat mat :
-                countours) {
+        for (Mat mat : countours) {
             if (Imgproc.contourArea(mat) > image.rows() * image.cols() / 4) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
                 if (rect.height > 50)
@@ -91,9 +93,7 @@ public class ImageProcessor {
             }
         }
 
-        if (result.height() == 0) {
-            return;
-        }
+        assert result.height() != 0;
 
         image = result;
     }
@@ -126,8 +126,8 @@ public class ImageProcessor {
         Mat rotatedImage = Imgproc.getRotationMatrix2D(center, angle, 1.0);
 
         Size size = new Size(src.width(), src.height());
-        Imgproc.warpAffine(src, src, rotatedImage, size, Imgproc.INTER_LINEAR
-                + Imgproc.CV_WARP_FILL_OUTLIERS);
+        Imgproc.warpAffine(src, src, rotatedImage, size,
+                Imgproc.INTER_LINEAR + Imgproc.CV_WARP_FILL_OUTLIERS);
         return src;
     }
 
@@ -137,11 +137,11 @@ public class ImageProcessor {
 
         Mat tmpMat = new Mat(image.height(), image.width(), image.type());
 
-        //create a mask for future use:
         Mat imageClone = image.clone();
 
         Mat mask = new Mat(image.height(), image.width(), image.type());
-        Imgproc.threshold(imageClone, mask, 150, 255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(imageClone, mask, 150, 255,
+                Imgproc.THRESH_BINARY);
 
         Core.bitwise_and(image, mask, tmpMat);
 
@@ -149,14 +149,12 @@ public class ImageProcessor {
                 Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
                 Imgproc.THRESH_BINARY_INV, 11, 25);
 
-        //get minimal rotated rect
         Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
         Core.findNonZero(tmpMat, pointMat);
 
         MatOfPoint2f mat2f = new MatOfPoint2f();
         pointMat.convertTo(mat2f, CvType.CV_32FC2);
 
-        //get angle
         RotatedRect rotated = Imgproc.minAreaRect(mat2f);
 
         if (rotated.size.width > rotated.size.height)
@@ -175,13 +173,14 @@ public class ImageProcessor {
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hiech = new Mat();
 
-        Imgproc.findContours(image, contours, hiech, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
+        Imgproc.findContours(image, contours, hiech,
+                Imgproc.RETR_TREE,
+                Imgproc.CHAIN_APPROX_NONE);
 
         contours.removeIf((mat) -> image.height() - mat.height() < 200);
         contours.removeIf((mat) -> mat.size().area() < 7);
 
         chars = mergeInnerRects(contours, mergeType);
-
         chars = mergeCloseRects(chars, mergeType);
 
         drawRects(image, chars);
@@ -202,10 +201,11 @@ public class ImageProcessor {
         }
 
         List<MatOfPoint> contours = new ArrayList<>();
-        Imgproc.findContours(mask, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(mask, contours, new Mat(),
+                Imgproc.RETR_LIST,
+                Imgproc.CHAIN_APPROX_SIMPLE);
 
-        for (MatOfPoint contour :
-                contours) {
+        for (MatOfPoint contour : contours) {
             result.add(Imgproc.boundingRect(contour));
         }
 
@@ -219,8 +219,9 @@ public class ImageProcessor {
             Rect rect = rects.get(i);
             for (int j = i; j < rects.size(); j++) {
                 Rect otherRect = rects.get(j);
-                if (Math.abs((rect.y + rect.height / 2) - (otherRect.y + otherRect.height / 2)) < 1)
+                if (Math.abs((rect.y + rect.height / 2) - (otherRect.y + otherRect.height / 2)) < 1){
                     mergedRects.add(Validator.merge(rect, otherRect, mergeType));
+                }
             }
         }
 
@@ -228,8 +229,7 @@ public class ImageProcessor {
     }
 
     private void drawRects(Mat image, List<Rect> rects) {
-        for (Rect rect :
-                rects) {
+        for (Rect rect : rects) {
             Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(255), 1);
         }
     }

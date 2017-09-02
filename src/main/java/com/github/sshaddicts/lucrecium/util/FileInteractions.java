@@ -12,8 +12,7 @@ import java.util.List;
 public class FileInteractions {
 
     public static void saveMats(List<Mat> list, String directory) {
-        for (Mat mat :
-                list) {
+        for (Mat mat : list) {
             saveMat(mat, directory);
         }
     }
@@ -29,10 +28,10 @@ public class FileInteractions {
         File[] files = parentDirectory.listFiles();
 
         assert files != null;
-        for (File file :
-                files) {
-            if (file.isFile())
+        for (File file : files) {
+            if (file.isFile()) {
                 filenames.add(parentDirectory.getName() + "/" + file.getName());
+            }
         }
 
         return filenames;
