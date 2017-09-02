@@ -52,11 +52,11 @@ public class ImageProcessor {
 
     private void blur() {
         Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
-        Imgproc.GaussianBlur(image, tempMat, new Size(3, 3), 0);
+        Imgproc.GaussianBlur(image, tempMat, new Size(1, 1), 0);
         image = tempMat;
     }
 
-    private void resize() {
+    public void resize() {
         if (image.height() == 0 || image.width() == 0)
 
             if (image.height() < 500) {
@@ -103,7 +103,7 @@ public class ImageProcessor {
     }
 
     public List<Mat> getText(int mergeType) {
-        computeSkewAndProcess();
+        process();
         detectText(mergeType);
         return getMats();
     }
@@ -121,21 +121,6 @@ public class ImageProcessor {
         return returnList;
     }
 
-    private Rect fixRect(Rect rect, int padding) {
-        padding = padding == 0 ? 10 : padding;
-
-        int lowX = rect.x - padding;
-        int lowY = rect.y - padding;
-
-        int highX = rect.width + (padding * 2);
-        int highY = rect.height + (padding * 2);
-
-        return new Rect(lowX <= 0 ? 0 : lowX, lowY <= 0 ? 0 : lowY,
-                rect.x + highX > image.cols() - 2 ? rect.width : highX,
-                rect.y + highY > image.rows() - 2 ? rect.height : highY);
-
-    }
-
     private Mat deskew(Mat src, double angle) {
         Point center = new Point(src.width() / 2, src.height() / 2);
         Mat rotatedImage = Imgproc.getRotationMatrix2D(center, angle, 1.0);
@@ -147,7 +132,7 @@ public class ImageProcessor {
     }
 
     //TODO refactor
-    public void computeSkewAndProcess() {
+    public void process() {
         resize();
 
         Mat tmpMat = new Mat(image.height(), image.width(), image.type());
@@ -156,13 +141,13 @@ public class ImageProcessor {
         Mat imageClone = image.clone();
 
         Mat mask = new Mat(image.height(), image.width(), image.type());
-        Imgproc.threshold(imageClone, mask, 100, 255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(imageClone, mask, 150, 255, Imgproc.THRESH_BINARY);
 
         Core.bitwise_and(image, mask, tmpMat);
 
         Imgproc.adaptiveThreshold(tmpMat, image, 255,
                 Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY_INV, 11, 12);
+                Imgproc.THRESH_BINARY_INV, 11, 25);
 
         //get minimal rotated rect
         Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
@@ -197,7 +182,9 @@ public class ImageProcessor {
 
         chars = mergeInnerRects(contours, mergeType);
 
-        chars = mergeCloseRects(chars);
+        chars = mergeCloseRects(chars, mergeType);
+
+        drawRects(image, chars);
 
         Mat temp = new Mat(image.size(), image.type());
 
@@ -225,7 +212,7 @@ public class ImageProcessor {
         return result;
     }
 
-    private List<Rect> mergeCloseRects(List<Rect> rects) {
+    private List<Rect> mergeCloseRects(List<Rect> rects, int mergeType) {
         List<Rect> mergedRects = new ArrayList<>();
 
         for (int i = 0; i < rects.size(); i++) {
@@ -233,40 +220,17 @@ public class ImageProcessor {
             for (int j = i; j < rects.size(); j++) {
                 Rect otherRect = rects.get(j);
                 if (Math.abs((rect.y + rect.height / 2) - (otherRect.y + otherRect.height / 2)) < 1)
-                    mergedRects.add(Validator.merge(rect, otherRect));
+                    mergedRects.add(Validator.merge(rect, otherRect, mergeType));
             }
         }
 
         return mergedRects;
     }
 
-
     private void drawRects(Mat image, List<Rect> rects) {
         for (Rect rect :
                 rects) {
             Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(255), 1);
         }
-    }
-
-    public Mat experimentalProcessing() {
-
-        resize();
-
-        Mat tmp = new Mat();
-        blur();
-
-        Imgproc.adaptiveThreshold(image, tmp, 255,
-                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY, 111, 3);
-
-        Mat kernel = Mat.ones(new Size(5, 5), CvType.CV_8UC1);
-
-        Mat opening = new Mat();
-        Mat closing = new Mat();
-
-        Imgproc.morphologyEx(tmp, opening, Imgproc.MORPH_OPEN, kernel);
-        Imgproc.morphologyEx(opening, closing, Imgproc.MORPH_CLOSE, kernel);
-
-        return closing;
     }
 }

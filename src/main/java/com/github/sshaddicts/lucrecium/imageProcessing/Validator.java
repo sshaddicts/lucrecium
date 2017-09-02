@@ -27,12 +27,12 @@ public class Validator {
         return isValidArea && isValidAspectRatio;
     }
 
-    static Rect merge(Rect rect1, Rect rect2) {
+    static Rect merge(Rect rect1, Rect rect2, int mergeType) {
 
         return new Rect(Integer.min(rect1.x, rect2.x),
                 Integer.max(rect1.y, rect2.y),
 
-                Integer.max(rect1.width, rect2.width),
+                Integer.max(rect1.width, rect2.width) + mergeType,
                 Integer.max(rect1.height, rect2.height));
     }
 }

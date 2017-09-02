@@ -19,7 +19,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
 import java.io.IOException;
 
 
-public class RichNeuralNet {
+public class RichNeuralNet{
     private final int ITERATIONS = 1;
     private final double LEARNING_RATE = 0.006;
 

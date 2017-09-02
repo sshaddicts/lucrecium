@@ -1,16 +1,14 @@
 package imageprocessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
-import org.apache.commons.io.FileUtils;
+import com.github.sshaddicts.lucrecium.imageProcessing.Imshow;
 import org.junit.Test;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -38,7 +36,7 @@ public class ImageProcessorTests {
     public void testImageProcessing() {
         ImageProcessor processor = new ImageProcessor(filename);
 
-        processor.computeSkewAndProcess();
+        processor.process();
         processor.detectText(ImageProcessor.MERGE_CHARS);
     }
 }
