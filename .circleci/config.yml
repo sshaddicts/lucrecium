@@ -40,7 +40,4 @@ jobs:
 
       - deploy:
         name: Deploy to bintray
-        command: |
-          if [ "${CIRCLE_BRANCH}" == "master" ]; then
-            mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .settings.xml
-          fi
+        command: [[ $TRAVIS_BRANCH == "master" ]] && mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
