@@ -41,5 +41,5 @@ jobs:
       - deploy:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
+              mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .settings.xml
             fi
