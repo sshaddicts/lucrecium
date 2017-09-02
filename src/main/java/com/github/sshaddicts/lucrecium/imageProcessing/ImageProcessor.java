@@ -14,7 +14,6 @@ import java.util.Objects;
 public class ImageProcessor {
 
     private Mat image;
-    private MatOfRect regions;
 
     private List<Rect> chars;
     private List<Rect> lines;
@@ -24,7 +23,7 @@ public class ImageProcessor {
     public static final int MERGE_LINES = -20;
     public static final int MERGE_CHARS = 1;
 
-    public double resizeRate = 0.3;
+    private double resizeRate = 0.3;
 
     Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -38,7 +37,6 @@ public class ImageProcessor {
             throw new IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = "
                     + image.height() + ", width = " + image.width() + ".\n" +
                     "Requested filepath: " + filename + ", check it once again.");
-        this.regions = new MatOfRect();
         this.chars = new ArrayList<>();
     }
 
@@ -56,7 +54,7 @@ public class ImageProcessor {
         image = tempMat;
     }
 
-    public void resize() {
+    private void resize() {
         if (image.height() == 0 || image.width() == 0) {
             if (image.height() < 500) {
                 resizeRate *= 2.5;

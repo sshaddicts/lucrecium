@@ -1,7 +1,6 @@
 package imageprocessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
-import com.github.sshaddicts.lucrecium.imageProcessing.Imshow;
 import org.junit.Test;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;

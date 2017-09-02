@@ -18,22 +18,16 @@ import java.util.Random;
 
 public class ImageDataSet {
 
-    ImageRecordReader recordReader;
-    FileSplit fileSplit;
+    private final FileSplit fileSplit;
+    private final BalancedPathFilter pathFilter;
+    private final DataSetIterator iterator;
 
-    InputSplit training;
-    InputSplit testing;
-
-    BalancedPathFilter pathFilter;
-
-    DataSetIterator iterator;
-
-    private final int batchSize;
-    private final int outputLabelCount;
+    private InputSplit training;
+    private InputSplit testing;
 
     Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public ImageDataSet(String parentDir, int classNumber, int batchSize) {
+    public ImageDataSet(String parentDir, int outputLabelCount, int batchSize) {
         File parentDirectory = new File(parentDir);
 
         String[] allowedExtensions = new String[]{".png", ".jpg"};
@@ -41,11 +35,8 @@ public class ImageDataSet {
 
         ParentPathLabelGenerator labelMarker = new ParentPathLabelGenerator();
 
-        this.recordReader = new ImageRecordReader(18, 9, 1, labelMarker);
+        ImageRecordReader recordReader = new ImageRecordReader(18, 9, 1, labelMarker);
         this.pathFilter = new BalancedPathFilter(new Random(), allowedExtensions, labelMarker);
-
-        this.outputLabelCount = classNumber;
-        this.batchSize = batchSize;
 
         this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, outputLabelCount);
 
