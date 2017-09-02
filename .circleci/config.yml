@@ -39,5 +39,7 @@ jobs:
           path: target/lucrecium-core-0.0.2.jar
 
       - deploy:
-          name: Deploy to bintray
-          command: [[ $TRAVIS_BRANCH == "master" ]] && mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              mvn deploy -DskipTests=true -Dmaven.javadoc.skip=true --batch-mode --show-version --settings .travis.settings.xml
+            fi
