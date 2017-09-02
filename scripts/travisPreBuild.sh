@@ -13,4 +13,3 @@ sudo apt-get install ./libgstreamer0.10-0_0.10.36-1.2ubuntu3_amd64.deb
 
 #rm libav-tools_9.20-0ubuntu0.14.04.1_amd64.deb
 rm libgstreamer0.10-0_0.10.36-1.2ubuntu3_amd64.deb
-    
