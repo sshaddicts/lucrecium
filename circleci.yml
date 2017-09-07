@@ -3,3 +3,4 @@ general:
     only:
       - master
       - /feature-.*/
+      - /fix-.*/

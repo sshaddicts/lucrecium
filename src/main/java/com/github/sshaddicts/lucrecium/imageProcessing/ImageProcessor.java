@@ -190,10 +190,6 @@ public class ImageProcessor {
         chars = mergeCloseRects(chars, mergeType);
 
         chars.removeIf((rect) -> rect.height < 17);
-
-        drawContours(imageClone, contours, new Scalar(255, 128, 0));
-        drawRects(imageClone, chars);
-        Imshow.show(imageClone, "defaultprocessing");
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -259,85 +255,6 @@ public class ImageProcessor {
     public Mat submat(int x, int y, int width, int height) {
         Rect rect = new Rect(x, y, width, height);
         return image.submat(rect);
-    }
-
-    //TODO fix terribly inefficient code that doesn't even work properly
-    private List<Mat> processEntry(int id) {
-        Mat entry = image.submat(chars.get(id));
-
-        Mat one = entry.clone();
-        Mat two = entry.clone();
-        Mat three = entry.clone();
-
-        int width = entry.width();
-        int height = entry.height();
-
-        int letterNumber = width / height * 2;
-
-        int spacingmin = width / letterNumber - 2;
-        int spacing = width / letterNumber;
-        int spacingmax = width / letterNumber + 2;
-
-        int totalLetterNumberMin = width / spacingmin;
-        int totalLetterNumber = width / spacing;
-        int totalLetterNumberMax = width / spacingmax;
-
-        double sumOne = 0;
-        double sumTwo = 0;
-        double sumthree = 0;
-
-        for (int i = 0; i < totalLetterNumberMin; i++) {
-
-            sumOne += Core.sumElems(one.col(spacingmin * i)).val[0];
-            Imgproc.rectangle(one,
-                    new Point(spacingmin * i, 1),
-                    new Point(spacingmin * i, height),
-                    new Scalar(255),
-                    1);
-        }
-
-        for (int i = 0; i < totalLetterNumber; i++) {
-            sumTwo += Core.sumElems(two.col(spacing * i)).val[0];
-            Imgproc.rectangle(two,
-                    new Point(spacing * i, 1),
-                    new Point(spacing * i, height),
-                    new Scalar(255),
-                    1);
-        }
-
-        for (int i = 0; i < totalLetterNumberMax; i++) {
-            sumthree += Core.sumElems(three.col(spacingmax * i)).val[0];
-            Imgproc.rectangle(three,
-                    new Point(spacingmax * i, 1),
-                    new Point(spacingmax * i, height),
-                    new Scalar(255),
-                    1);
-        }
-
-        sumOne /= totalLetterNumberMin;
-        sumTwo /= totalLetterNumber;
-        sumthree /= totalLetterNumberMax;
-
-        //double smallest = Math.min(sumOne, Math.min(sumTwo, sumthree));
-        double smallest;
-        if (sumOne < sumTwo && sumOne < sumthree) {
-            smallest = sumOne;
-            Imshow.show(one, "smallest");
-            Imshow.show(two, "rest");
-            Imshow.show(three, "rest");
-        } else if (sumTwo < sumthree && sumTwo < sumOne) {
-            smallest = sumTwo;
-            Imshow.show(two, "smallest");
-            Imshow.show(one, "rest");
-            Imshow.show(three, "rest");
-        } else {
-            smallest = sumthree;
-            Imshow.show(three, "smallest");
-            Imshow.show(two, "rest");
-            Imshow.show(one, "rest");
-        }
-
-        return new ArrayList<>();
     }
 
     public static INDArray matToNdarray(Mat mat) {
