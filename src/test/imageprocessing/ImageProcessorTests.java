@@ -7,7 +7,6 @@ import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -25,17 +24,15 @@ public class ImageProcessorTests {
     }
 
     @Test
-    public void imageContainsLetters() throws IOException {
+    public void imageContainsLetters() {
         ImageProcessor processor = new ImageProcessor(filename);
-        List<Mat> mats = processor.getText(ImageProcessor.MERGE_CHARS);
+        List<Mat> mats = processor.getTextRegions();
         assertTrue("mat.size() is " + mats.size() + ", but should never be", mats.size() > 0);
     }
 
     @Test
     public void testImageProcessing() {
         ImageProcessor processor = new ImageProcessor(filename);
-
-        processor.process();
         processor.detectText(ImageProcessor.MERGE_CHARS);
     }
 }

@@ -1,31 +1,32 @@
 package com.github.sshaddicts.lucrecium.imageProcessing;
 
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.ImagingOpException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
 
 public class ImageProcessor {
 
     private Mat image;
 
     private List<Rect> chars;
-    private List<Rect> lines;
-    public static final int DEFAULT_REGION_PADDING = 1;
 
-    public static final int MERGE_WORDS = -3;
+    public static final int MERGE_WORDS = -5;
     public static final int MERGE_LINES = -20;
-    public static final int MERGE_CHARS = 1;
+    public static final int MERGE_CHARS = 2;
 
     private double resizeRate = 0.3;
 
-    Logger log = LoggerFactory.getLogger(this.getClass());
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     public ImageProcessor(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
@@ -40,25 +41,27 @@ public class ImageProcessor {
         this.chars = new ArrayList<>();
     }
 
-    private void threshold() {
+    private Mat thresholdImage() {
         Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
-        Imgproc.adaptiveThreshold(image, tempMat, 255,
+
+        Mat mask = new Mat(image.height(), image.width(), image.type());
+        Imgproc.threshold(image, tempMat, 0.0, 255,
+                Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
+
+        Imgproc.adaptiveThreshold(tempMat, mask, 255,
                 Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY, 7, 5);
-        image = tempMat;
+                Imgproc.THRESH_BINARY_INV, 21, 22);
+
+        return mask;
     }
 
-    private void blur() {
-        Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
-        Imgproc.GaussianBlur(image, tempMat, new Size(1, 1), 0);
-        image = tempMat;
-    }
-
-    private void resize() {
+    public void resize() {
         if (image.height() == 0 || image.width() == 0) {
-            if (image.height() < 500) {
-                resizeRate *= 2.5;
-            }
+            return;
+        }
+
+        if (image.height() < 500) {
+            resizeRate *= 2.5;
         }
 
         Mat tempMat = new Mat(image.height(), image.width(), image.type());
@@ -70,43 +73,44 @@ public class ImageProcessor {
         image = tempMat;
     }
 
-    private void cropImage() {
-        Mat tempMat = new Mat();
+    private Mat cropImage() throws ImagingOpException {
+        Mat tmpImage = thresholdImage();
+
         List<MatOfPoint> countours = new ArrayList<>();
         Mat hierarchy = new Mat();
 
-        int mode = Imgproc.RETR_LIST;
-        int method = Imgproc.CHAIN_APPROX_SIMPLE;
-
-        Imgproc.threshold(image, tempMat, 75, 255, CvType.CV_8UC1);
-        Imgproc.findContours(tempMat, countours, hierarchy, mode, method);
+        Imgproc.findContours(tmpImage, countours, hierarchy,
+                Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
         Mat result = new Mat();
 
         for (Mat mat : countours) {
-            if (Imgproc.contourArea(mat) > image.rows() * image.cols() / 4) {
+            if (Imgproc.contourArea(mat) > tmpImage.rows() * tmpImage.cols() / 4) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
                 if (rect.height > 50)
                     result = image.submat(rect);
             }
         }
 
-        assert result.height() != 0;
+        if (result.height() != 0 && result.width() != 0) {
+            return result;
+        }
+        log.warn("Not found a contour suitable for cropping the image. Consider brighter light, less blurred image or higher contrast levels");
+        return image;
+    }
 
-        image = result;
+    private Mat adjustContrast(Mat image, double alpha, double beta) {
+        Mat result = Mat.zeros(image.size(), image.type());
+        image.convertTo(result, -1, alpha, beta);
+
+        return result;
     }
 
     public Mat getImage() {
         return image;
     }
 
-    public List<Mat> getText(int mergeType) {
-        process();
-        detectText(mergeType);
-        return getMats();
-    }
-
-    private List<Mat> getMats() {
+    public List<Mat> getTextRegions() {
         List<Mat> returnList = new ArrayList<>();
 
         Mat source;
@@ -129,26 +133,9 @@ public class ImageProcessor {
         return src;
     }
 
-    //TODO refactor
-    public void process() {
-        resize();
-
-        Mat tmpMat = new Mat(image.height(), image.width(), image.type());
-
-        Mat imageClone = image.clone();
-
-        Mat mask = new Mat(image.height(), image.width(), image.type());
-        Imgproc.threshold(imageClone, mask, 150, 255,
-                Imgproc.THRESH_BINARY);
-
-        Core.bitwise_and(image, mask, tmpMat);
-
-        Imgproc.adaptiveThreshold(tmpMat, image, 255,
-                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY_INV, 11, 25);
-
-        Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
-        Core.findNonZero(tmpMat, pointMat);
+    private double deskew(Mat src) {
+        Mat pointMat = Mat.zeros(src.size(), src.channels());
+        Core.findNonZero(src, pointMat);
 
         MatOfPoint2f mat2f = new MatOfPoint2f();
         pointMat.convertTo(mat2f, CvType.CV_32FC2);
@@ -158,15 +145,36 @@ public class ImageProcessor {
         if (rotated.size.width > rotated.size.height)
             rotated.angle += 90.f;
 
-        image = deskew(image, rotated.angle);
+        log.debug("Rotation angle: " + rotated.angle + " degrees.");
 
-        cropImage();
+        src = deskew(src, rotated.angle);
+
+        return rotated.angle;
+    }
+
+    public void process() {
+        resize();
+
+        image = adjustContrast(image, 5, -750);
+
+        Mat mask = new Mat(image.height(), image.width(), image.type());
+        Imgproc.threshold(image, mask, 0.0, 255,
+                Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
+
+        Imgproc.adaptiveThreshold(mask, image, 255,
+                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+                Imgproc.THRESH_BINARY_INV, 21, 22);
+
+        deskew(image);
+
+        image = cropImage();
     }
 
     public void detectText(int mergeType) {
-        Mat newImage = image.clone();
+        process();
 
-        Imgproc.cvtColor(image, newImage, Imgproc.COLOR_GRAY2RGB);
+        Mat imageClone = image.clone();
+        Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
 
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hiech = new Mat();
@@ -181,11 +189,11 @@ public class ImageProcessor {
         chars = mergeInnerRects(contours, mergeType);
         chars = mergeCloseRects(chars, mergeType);
 
-        drawRects(image, chars);
+        chars.removeIf((rect) -> rect.height < 17);
 
-        Mat temp = new Mat(image.size(), image.type());
-
-        drawRects(temp, chars);
+        drawContours(imageClone, contours, new Scalar(255, 128, 0));
+        drawRects(imageClone, chars);
+        Imshow.show(imageClone, "defaultprocessing");
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -194,8 +202,10 @@ public class ImageProcessor {
 
         for (MatOfPoint point : points) {
             Rect rect = Imgproc.boundingRect(point);
+            //if(rect.height > rect.width * 2 - rect.width / 5){
             rect.width -= mergeType;
-            Imgproc.rectangle(mask, rect.tl(), rect.br(), new Scalar(255), -1);
+            Imgproc.rectangle(mask, rect.tl(), rect.br(), new Scalar(255), -10);
+            //}
         }
 
         List<MatOfPoint> contours = new ArrayList<>();
@@ -217,7 +227,7 @@ public class ImageProcessor {
             Rect rect = rects.get(i);
             for (int j = i; j < rects.size(); j++) {
                 Rect otherRect = rects.get(j);
-                if (Math.abs((rect.y + rect.height / 2) - (otherRect.y + otherRect.height / 2)) < 1){
+                if (Math.abs((rect.y + rect.height / 2) - (otherRect.y + otherRect.height / 2)) == 0) {
                     mergedRects.add(Validator.merge(rect, otherRect, mergeType));
                 }
             }
@@ -228,7 +238,119 @@ public class ImageProcessor {
 
     private void drawRects(Mat image, List<Rect> rects) {
         for (Rect rect : rects) {
-            Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(255), 1);
+            Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(0, 128, 255), 1);
         }
+    }
+
+    public void drawContours(Mat image, List<MatOfPoint> contours, Scalar color) {
+        Imgproc.drawContours(image, contours, -1, new Scalar(255, 128, 0), -1);
+    }
+
+    public static BufferedImage toBufferedImage(Mat image) {
+        return Imshow.toBufferedImage(image);
+    }
+
+    public static byte[] toByteArray(Mat image) {
+        byte[] byteData = new byte[image.height() * image.width()];
+        image.get(0, 0, byteData);
+        return byteData;
+    }
+
+    public Mat submat(int x, int y, int width, int height) {
+        Rect rect = new Rect(x, y, width, height);
+        return image.submat(rect);
+    }
+
+    //TODO fix terribly inefficient code that doesn't even work properly
+    private List<Mat> processEntry(int id) {
+        Mat entry = image.submat(chars.get(id));
+
+        Mat one = entry.clone();
+        Mat two = entry.clone();
+        Mat three = entry.clone();
+
+        int width = entry.width();
+        int height = entry.height();
+
+        int letterNumber = width / height * 2;
+
+        int spacingmin = width / letterNumber - 2;
+        int spacing = width / letterNumber;
+        int spacingmax = width / letterNumber + 2;
+
+        int totalLetterNumberMin = width / spacingmin;
+        int totalLetterNumber = width / spacing;
+        int totalLetterNumberMax = width / spacingmax;
+
+        double sumOne = 0;
+        double sumTwo = 0;
+        double sumthree = 0;
+
+        for (int i = 0; i < totalLetterNumberMin; i++) {
+
+            sumOne += Core.sumElems(one.col(spacingmin * i)).val[0];
+            Imgproc.rectangle(one,
+                    new Point(spacingmin * i, 1),
+                    new Point(spacingmin * i, height),
+                    new Scalar(255),
+                    1);
+        }
+
+        for (int i = 0; i < totalLetterNumber; i++) {
+            sumTwo += Core.sumElems(two.col(spacing * i)).val[0];
+            Imgproc.rectangle(two,
+                    new Point(spacing * i, 1),
+                    new Point(spacing * i, height),
+                    new Scalar(255),
+                    1);
+        }
+
+        for (int i = 0; i < totalLetterNumberMax; i++) {
+            sumthree += Core.sumElems(three.col(spacingmax * i)).val[0];
+            Imgproc.rectangle(three,
+                    new Point(spacingmax * i, 1),
+                    new Point(spacingmax * i, height),
+                    new Scalar(255),
+                    1);
+        }
+
+        sumOne /= totalLetterNumberMin;
+        sumTwo /= totalLetterNumber;
+        sumthree /= totalLetterNumberMax;
+
+        //double smallest = Math.min(sumOne, Math.min(sumTwo, sumthree));
+        double smallest;
+        if (sumOne < sumTwo && sumOne < sumthree) {
+            smallest = sumOne;
+            Imshow.show(one, "smallest");
+            Imshow.show(two, "rest");
+            Imshow.show(three, "rest");
+        } else if (sumTwo < sumthree && sumTwo < sumOne) {
+            smallest = sumTwo;
+            Imshow.show(two, "smallest");
+            Imshow.show(one, "rest");
+            Imshow.show(three, "rest");
+        } else {
+            smallest = sumthree;
+            Imshow.show(three, "smallest");
+            Imshow.show(two, "rest");
+            Imshow.show(one, "rest");
+        }
+
+        return new ArrayList<>();
+    }
+
+    public static INDArray matToNdarray(Mat mat) {
+
+        byte[] matData = new byte[mat.width() * mat.height()];
+        double[] retData = new double[matData.length];
+
+        mat.get(0, 0, matData);
+
+        for (int i = 0; i < matData.length; i++) {
+            retData[i] = (double) matData[i];
+        }
+
+        return Nd4j.create(retData, new int[]{mat.width(), mat.height()});
     }
 }

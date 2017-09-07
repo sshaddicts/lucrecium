@@ -33,7 +33,10 @@ public class FileInteractions {
                 filenames.add(parentDirectory.getName() + "/" + file.getName());
             }
         }
-
         return filenames;
+    }
+
+    public static void saveMatWithName(Mat mat, String directory, String filename) {
+        Imgcodecs.imwrite(directory + "/" + directory + "_" + filename + ".png", mat);
     }
 }

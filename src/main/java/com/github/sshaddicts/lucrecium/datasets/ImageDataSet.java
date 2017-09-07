@@ -7,8 +7,8 @@ import org.datavec.api.split.InputSplit;
 import org.datavec.image.recordreader.ImageRecordReader;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
-import org.nd4j.linalg.dataset.api.preprocessor.ImageFlatteningDataSetPreProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,16 +18,24 @@ import java.util.Random;
 
 public class ImageDataSet {
 
-    private final FileSplit fileSplit;
-    private final BalancedPathFilter pathFilter;
-    private final DataSetIterator iterator;
+    private FileSplit fileSplit;
+    private BalancedPathFilter pathFilter;
+    private DataSetIterator iterator;
 
     private InputSplit training;
     private InputSplit testing;
 
+    private final int outputLabelCount;
+    private final int batchSize;
+
     Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public ImageDataSet(String parentDir, int outputLabelCount, int batchSize) {
+    public ImageDataSet(int outputLabelCount, int batchSize) {
+        this.outputLabelCount = outputLabelCount;
+        this.batchSize = batchSize;
+    }
+
+    public void initFromDirectory(String parentDir) throws IOException {
         File parentDirectory = new File(parentDir);
 
         String[] allowedExtensions = new String[]{".png", ".jpg"};
@@ -40,14 +48,11 @@ public class ImageDataSet {
 
         this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, outputLabelCount);
 
-        iterator.setPreProcessor(new ImageFlatteningDataSetPreProcessor());
+        recordReader.initialize(fileSplit);
+    }
 
-        try {
-            recordReader.initialize(fileSplit);
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
-
+    public void addPreProcessor(DataSetPreProcessor preProcessor) {
+        this.iterator.setPreProcessor(preProcessor);
     }
 
     public void splitData(int train, int test) {
