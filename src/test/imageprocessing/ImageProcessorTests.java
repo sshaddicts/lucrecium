@@ -13,26 +13,27 @@ import static org.junit.Assert.assertTrue;
 
 public class ImageProcessorTests {
 
-    private final String filename = "testCase/good.jpg";
+    private final String example = "testCase/good.jpg";
+    private final String skewed = "testcase/skew.jpg";
 
     Logger log = LoggerFactory.getLogger(this.getClass());
 
     static {
-
         System.out.println(System.getProperty("java.library.path"));
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
     @Test
     public void imageContainsLetters() {
-        ImageProcessor processor = new ImageProcessor(filename);
+        ImageProcessor processor = new ImageProcessor(example);
+        processor.detectText(ImageProcessor.MERGE_LINES);
         List<Mat> mats = processor.getTextRegions();
         assertTrue("mat.size() is " + mats.size() + ", but should never be", mats.size() > 0);
     }
 
     @Test
     public void testImageProcessing() {
-        ImageProcessor processor = new ImageProcessor(filename);
+        ImageProcessor processor = new ImageProcessor(example);
         processor.detectText(ImageProcessor.MERGE_CHARS);
     }
 }
