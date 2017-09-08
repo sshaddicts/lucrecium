@@ -32,7 +32,7 @@ public class ImageProcessorTests {
     @Test
     public void imageContainsLetters() {
         ImageProcessor processor = new ImageProcessor(example);
-        List<Mat> mats = processor.getTextRegions(ImageProcessor.MERGE_LINES);
+        List<Mat> mats = processor.getTextRegions(ImageProcessor.MERGE_CHARS);
         assertTrue("mat.size() is " + mats.size() + ", but should never be", mats.size() > 0);
     }
 

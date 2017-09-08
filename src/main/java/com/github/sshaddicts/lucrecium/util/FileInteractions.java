@@ -30,7 +30,7 @@ public class FileInteractions {
         assert files != null;
         for (File file : files) {
             if (file.isFile()) {
-                filenames.add(parentDirectory.getName() + "/" + file.getName());
+                filenames.add(parentDir + "/" + file.getName());
             }
         }
         return filenames;

@@ -24,6 +24,7 @@ public class ImageProcessor {
     public static final int MERGE_CHARS = 2;
 
     private double resizeRate = 0.3;
+    private boolean isRotationNeeded = false;
 
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -40,12 +41,18 @@ public class ImageProcessor {
         this.chars = new ArrayList<>();
     }
 
-    private Mat thresholdImage() {
-        Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
+    public void needsRotation(boolean needsRotation){
+        this.isRotationNeeded = needsRotation;
+    }
 
-        Mat mask = new Mat(image.height(), image.width(), image.type());
-        Imgproc.threshold(image, tempMat, 20, 255,
-                Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
+    public Mat getImage() {
+        return image;
+    }
+
+    private Mat thresholdImage(Mat src) {
+        Mat mask = new Mat(src.height(), src.width(), src.type());
+        Imgproc.threshold(src, mask, 20, 255,
+                Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU);
 
         return mask;
     }
@@ -64,26 +71,30 @@ public class ImageProcessor {
         double height = image.height() * resizeRate;
         double width = image.width() * resizeRate;
 
-        Imgproc.resize(image, tempMat, new Size(width, height));
+        Imgproc.resize(image, tempMat, new Size(width, height), 2, 2, Imgproc.INTER_AREA);
         image = tempMat;
     }
 
     private Mat cropImage() {
-        Mat tmpImage = thresholdImage();
-
-        List<MatOfPoint> countours = new ArrayList<>();
+        Mat tmpImage = thresholdImage(image);
+        List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
 
-        Imgproc.findContours(tmpImage, countours, hierarchy,
+        Imgproc.findContours(tmpImage, contours, hierarchy,
                 Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
         Mat result = new Mat();
 
-        for (Mat mat : countours) {
+        for (Mat mat : contours) {
             if (Imgproc.contourArea(mat) > tmpImage.rows() * tmpImage.cols() / 4) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
-                if (rect.height > 50)
+                if (rect.height > 50) {
+                    rect.x -= 1;
+                    rect.y -= 1;
+                    rect.width += 1;
+                    rect.height += 1;
                     result = image.submat(rect);
+                }
             }
         }
 
@@ -99,10 +110,6 @@ public class ImageProcessor {
         image.convertTo(result, -1, alpha, beta);
 
         return result;
-    }
-
-    public Mat getImage() {
-        return image;
     }
 
     public List<Mat> getTextRegions(int mergeType) {
@@ -130,8 +137,15 @@ public class ImageProcessor {
     }
 
     private double deskew(Mat src) {
-        Mat pointMat = Mat.zeros(src.size(), src.channels());
-        Core.findNonZero(src, pointMat);
+
+        Mat tmpMat = src.clone();
+        Imgproc.adaptiveThreshold(tmpMat, tmpMat, 255,
+                Imgproc.ADAPTIVE_THRESH_MEAN_C,
+                Imgproc.THRESH_BINARY_INV,
+                21,22);
+
+        Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
+        Core.findNonZero(tmpMat, pointMat);
 
         MatOfPoint2f mat2f = new MatOfPoint2f();
         pointMat.convertTo(mat2f, CvType.CV_32FC2);
@@ -149,23 +163,22 @@ public class ImageProcessor {
     }
 
     private void process() {
+
+        if(isRotationNeeded){
+            deskew(image);
+        }
+
         resize();
 
         image = adjustContrast(image, 5, -800);
 
-        Imgproc.threshold(image, image, 20, 255,
-                Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU);
-
-        deskew(image);
+        image = thresholdImage(image);
 
         image = cropImage();
     }
 
     private void detectText(int mergeType) {
         process();
-
-        Mat imageClone = image.clone();
-        Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
 
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hiech = new Mat();
@@ -177,10 +190,12 @@ public class ImageProcessor {
         contours.removeIf((mat) -> image.height() - mat.height() < 200);
         contours.removeIf((mat) -> mat.size().area() < 7);
 
-        chars = mergeInnerRects(contours, mergeType);
-        chars = mergeCloseRects(chars, mergeType);
-
-        chars.removeIf((rect) -> rect.height < 17);
+        if(mergeType == MERGE_CHARS){
+            chars = mergeInnerRects(contours, mergeType);
+        }else{
+            chars = mergeInnerRects(contours, mergeType);
+            chars = mergeCloseRects(chars, mergeType);
+        }
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -201,6 +216,8 @@ public class ImageProcessor {
         for (MatOfPoint contour : contours) {
             result.add(Imgproc.boundingRect(contour));
         }
+
+        log.debug("ROI number after merging inner rects: " + result.size());
 
         return result;
     }
