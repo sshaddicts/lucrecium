@@ -4,9 +4,13 @@ import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.distribution.Distribution;
 import org.deeplearning4j.nn.conf.inputs.InputType;
+import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.ModelSerializer;
@@ -22,18 +26,16 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 
-public class RichNeuralNet{
+public class RichNeuralNet {
     private final int ITERATIONS = 1;
     private final double LEARNING_RATE = 0.006;
 
-    private final boolean USE_DROP_CONNECT = false;
-    private final boolean MINI_BATCH = false;
-    private final boolean PRETRAIN = false;
-    private final boolean BACKPROP = true;
-    private final Activation ACTIVATION_FUNC = Activation.RELU;
     private final boolean REGULARIZATION = true;
+    private final int SEED = 123;
 
     private Evaluation eval = new Evaluation();
+
+    private int iterationNumber = 0;
 
     MultiLayerNetwork network;
 
@@ -53,40 +55,139 @@ public class RichNeuralNet{
         this.network = net;
     }
 
-    public void init(int numRows, int numCols) {
-        Log.debug(String.format("using %d as input size", numRows * numCols));
+    public void initCnn(int height) {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123)
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .iterations(1)
+                .seed(SEED)
+                .iterations(ITERATIONS)
+                .regularization(false).l2(0.005) // tried 0.0001, 0.0005
                 .activation(Activation.RELU)
+                .learningRate(0.0001) // tried 0.00001, 0.00005, 0.000001
                 .weightInit(WeightInit.XAVIER)
-                .learningRate(LEARNING_RATE)
-                .updater(new Nesterovs(0.98))
-                .regularization(true).l2(LEARNING_RATE * 0.005)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .updater(new Nesterovs(0.9))
                 .list()
-                .layer(0, new DenseLayer.Builder()
-                        .nIn(numRows * numCols)
-                        .nOut(500)
+                .layer(0, new ConvolutionLayer.Builder()
+                        .nIn(1)
+                        .nOut(96)
+                        .kernelSize(5, 5)
+                        .stride(1, 1)
                         .build())
-                .layer(1, new DenseLayer.Builder()
-                        .nIn(500)
-                        .nOut(100)
+                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
                         .build())
-                .layer(2, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .activation(Activation.SOFTMAX)
-                        .nIn(100)
+                .layer(2, new ConvolutionLayer.Builder()
+                        .nIn(20)
+                        .nOut(1)
+                        .kernelSize(2, 2)
+                        .stride(1, 1)
+                        .build())
+                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(1, 1)
+                        .build())
+                .layer(4, new DenseLayer.Builder().nOut(500).build())
+                .layer(5, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
                         .nOut(outputLabelCount)
+                        .activation(Activation.SOFTMAX)
                         .build())
-                .setInputType(InputType.convolutionalFlat(numRows, numCols, 1))
-                .pretrain(false).backprop(true)
+                .backprop(true).pretrain(false)
+                .setInputType(InputType.convolutional(height, height, 1))
+                .build();
+        network = new MultiLayerNetwork(conf);
+    }
+
+    public void initTextDetector() {
+        int outputNumber = 2;
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(SEED)
+                .iterations(ITERATIONS)
+                .regularization(REGULARIZATION).l2(0.0005)
+                .learningRate(.01)
+                .weightInit(WeightInit.XAVIER)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .updater(Updater.NESTEROVS)
+
+                .list()
+                .layer(0, new ConvolutionLayer.Builder(5, 5)
+                        //nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
+                        .nIn(1)
+                        .stride(2, 2)
+                        .nOut(1)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
+                        .build())
+
+
+                .layer(2, new DenseLayer.Builder().activation(Activation.RELU)
+                        .nOut(100).build())
+                .layer(3, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .nOut(outputNumber)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .setInputType(InputType.convolutionalFlat(32, 32, 1))
+                .backprop(true).pretrain(true).build();
+
+
+        network = new MultiLayerNetwork(conf);
+    }
+
+    public void initLenetMnist() {
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(SEED)
+                .iterations(ITERATIONS)
+                .regularization(true).l2(0.0005)
+                .learningRate(LEARNING_RATE).biasLearningRate(0.02)
+                .weightInit(WeightInit.XAVIER)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .updater(Updater.NESTEROVS) //To configure: .updater(new Nesterovs(0.9))
+                .list()
+                .layer(0, new ConvolutionLayer.Builder(5, 5)
+                        //nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
+                        .nIn(1)
+                        .stride(1, 1)
+                        .nOut(20)
+                        .activation(Activation.IDENTITY)
+                        .build())
+                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
+                        .build())
+                .layer(2, new ConvolutionLayer.Builder(5, 5)
+                        //Note that nIn need not be specified in later layers
+                        .stride(1, 1)
+                        .nOut(50)
+                        .activation(Activation.IDENTITY)
+                        .build())
+                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
+                        .build())
+                .layer(4, new DenseLayer.Builder().activation(Activation.RELU)
+                        .nOut(500).build())
+                .layer(5, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .nOut(2)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .setInputType(InputType.convolutionalFlat(32, 32, 1))
                 .build();
 
         network = new MultiLayerNetwork(conf);
-        network.init();
     }
 
     public void train(DataSetIterator data) {
+        long before = System.nanoTime();
+        iterationNumber++;
+        log.debug("working on iteration #" + iterationNumber);
+        network.fit(data);
+        long after = System.nanoTime();
+        log.debug("done. took " + ((after - before) / 100_000_000) + "seconds.");
+    }
+
+    public void train(INDArray data) {
         network.fit(data);
     }
 
@@ -103,7 +204,7 @@ public class RichNeuralNet{
         try {
             ModelSerializer.writeModel(network, filename, true);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
     }
 

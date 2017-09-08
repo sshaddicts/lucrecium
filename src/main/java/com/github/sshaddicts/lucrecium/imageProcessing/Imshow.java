@@ -89,7 +89,7 @@ public class Imshow {
     // CREDITS TO DANIEL: http://danielbaggio.blogspot.com.br/ for the improved
     // version !
 
-    public BufferedImage toBufferedImage(Mat m) {
+    public static BufferedImage toBufferedImage(Mat m) {
         int type = BufferedImage.TYPE_BYTE_GRAY;
         if (m.channels() > 1) {
             type = BufferedImage.TYPE_3BYTE_BGR;
