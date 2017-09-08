@@ -6,3 +6,4 @@ outputData/
 .idea/
 util/
 *.iml
+*.log

@@ -28,15 +28,13 @@ public class TextRecognizer {
 
         ImageProcessor proc = new ImageProcessor("testCase/good.jpg");
 
-        proc.process();
-
         int height = proc.getImage().height();
         int width = proc.getImage().width();
 
 
         for (int x = 0; x < width-32; x++) {
             for (int y = 0; y < height-32; y++) {
-                INDArray array = ImageProcessor.matToNdarray(proc.submat(x,y,32,32)).reshape(32,32,1);
+                INDArray array = ImageProcessor.toNdarray(proc.submat(x,y,32,32)).reshape(32,32,1);
 
                 log.debug(array.shapeInfoToString());
                 net.train(array);

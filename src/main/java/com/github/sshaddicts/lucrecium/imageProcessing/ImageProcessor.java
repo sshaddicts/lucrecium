@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.ImagingOpException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,19 +44,15 @@ public class ImageProcessor {
         Mat tempMat = new Mat(image.rows(), image.cols(), image.type());
 
         Mat mask = new Mat(image.height(), image.width(), image.type());
-        Imgproc.threshold(image, tempMat, 0.0, 255,
+        Imgproc.threshold(image, tempMat, 20, 255,
                 Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
-
-        Imgproc.adaptiveThreshold(tempMat, mask, 255,
-                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY_INV, 21, 22);
 
         return mask;
     }
 
-    public void resize() {
+    private void resize() {
         if (image.height() == 0 || image.width() == 0) {
-            return;
+            throw new IllegalArgumentException("Image size is illegal" + image.size().toString());
         }
 
         if (image.height() < 500) {
@@ -73,7 +68,7 @@ public class ImageProcessor {
         image = tempMat;
     }
 
-    private Mat cropImage() throws ImagingOpException {
+    private Mat cropImage() {
         Mat tmpImage = thresholdImage();
 
         List<MatOfPoint> countours = new ArrayList<>();
@@ -110,7 +105,8 @@ public class ImageProcessor {
         return image;
     }
 
-    public List<Mat> getTextRegions() {
+    public List<Mat> getTextRegions(int mergeType) {
+        detectText(mergeType);
         List<Mat> returnList = new ArrayList<>();
 
         Mat source;
@@ -152,25 +148,20 @@ public class ImageProcessor {
         return rotated.angle;
     }
 
-    public void process() {
+    private void process() {
         resize();
 
-        image = adjustContrast(image, 5, -750);
+        image = adjustContrast(image, 5, -800);
 
-        Mat mask = new Mat(image.height(), image.width(), image.type());
-        Imgproc.threshold(image, mask, 0.0, 255,
-                Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
-
-        Imgproc.adaptiveThreshold(mask, image, 255,
-                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY_INV, 21, 22);
+        Imgproc.threshold(image, image, 20, 255,
+                Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU);
 
         deskew(image);
 
         image = cropImage();
     }
 
-    public void detectText(int mergeType) {
+    private void detectText(int mergeType) {
         process();
 
         Mat imageClone = image.clone();
@@ -198,10 +189,8 @@ public class ImageProcessor {
 
         for (MatOfPoint point : points) {
             Rect rect = Imgproc.boundingRect(point);
-            //if(rect.height > rect.width * 2 - rect.width / 5){
             rect.width -= mergeType;
             Imgproc.rectangle(mask, rect.tl(), rect.br(), new Scalar(255), -10);
-            //}
         }
 
         List<MatOfPoint> contours = new ArrayList<>();
@@ -232,14 +221,53 @@ public class ImageProcessor {
         return mergedRects;
     }
 
-    private void drawRects(Mat image, List<Rect> rects) {
+    public Mat submat(int x, int y, int width, int height) {
+        Rect rect = new Rect(x, y, width, height);
+        return image.submat(rect);
+    }
+
+    public int approximateLineNumberFor(Mat m) {
+        int lineNumber = 0;
+
+        Mat sums = calculateLineSums(m);
+
+        int mean = (int) Core.mean(sums).val[0] / 3;
+
+        boolean prev = false;
+        for (int i = 0; i < sums.height(); i++) {
+            int value = (int) sums.get(i, 0)[0];
+
+            if (prev) {
+                prev = value < mean;
+            } else {
+                prev = value < mean;
+                lineNumber += prev ? 1 : 0;
+            }
+        }
+
+        return lineNumber;
+    }
+
+    private Mat calculateLineSums(Mat m) {
+        if (m.width() < 20) {
+            throw new IllegalArgumentException("m is too small, and probably is not valid");
+        }
+        Mat result = new Mat(m.height(), 1, CvType.CV_32S);
+
+        for (int i = 0; i < m.height(); i++) {
+            result.put(i, 0, (int) (Core.sumElems(m.row(i)).val[0]));
+        }
+        return result;
+    }
+
+    private void drawRects(Mat image, List<Rect> rects, Scalar color) {
         for (Rect rect : rects) {
-            Imgproc.rectangle(image, rect.tl(), rect.br(), new Scalar(0, 128, 255), 1);
+            Imgproc.rectangle(image, rect.tl(), rect.br(), color, 1);
         }
     }
 
-    public void drawContours(Mat image, List<MatOfPoint> contours, Scalar color) {
-        Imgproc.drawContours(image, contours, -1, new Scalar(255, 128, 0), -1);
+    private void drawContours(Mat image, List<MatOfPoint> contours, Scalar color) {
+        Imgproc.drawContours(image, contours, -1, color, -1);
     }
 
     public static BufferedImage toBufferedImage(Mat image) {
@@ -252,12 +280,7 @@ public class ImageProcessor {
         return byteData;
     }
 
-    public Mat submat(int x, int y, int width, int height) {
-        Rect rect = new Rect(x, y, width, height);
-        return image.submat(rect);
-    }
-
-    public static INDArray matToNdarray(Mat mat) {
+    public static INDArray toNdarray(Mat mat) {
 
         byte[] matData = new byte[mat.width() * mat.height()];
         double[] retData = new double[matData.length];
@@ -269,5 +292,14 @@ public class ImageProcessor {
         }
 
         return Nd4j.create(retData, new int[]{mat.width(), mat.height()});
+    }
+
+    public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours) {
+        ArrayList<Rect> result = new ArrayList<>();
+
+        for (MatOfPoint contour : contours) {
+            result.add(Imgproc.boundingRect(contour));
+        }
+        return result;
     }
 }
