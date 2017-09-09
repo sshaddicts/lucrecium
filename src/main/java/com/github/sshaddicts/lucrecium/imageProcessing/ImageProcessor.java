@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 
 //TODO add stream constructor
 public class ImageProcessor {
@@ -212,6 +213,23 @@ public class ImageProcessor {
         chars = splitForThreshold(chars, meanHeight, false);
 
         words = mergeCloseRects(chars);
+
+
+        Mat imageClone = new Mat(image.size(), image.type());
+        Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
+
+        for (int i = 0; i < contours.size(); i++) {
+            Imgproc.drawContours(imageClone, contours, i,
+                    new Scalar(ThreadLocalRandom.current().nextInt(0,255),
+                            ThreadLocalRandom.current().nextInt(0,255),
+                            ThreadLocalRandom.current().nextInt(0,255))
+                    ,-1);
+        }
+
+        drawRects(imageClone, chars, new Scalar(255, 128, 0));
+        //drawRects(imageClone, words, new Scalar(0, 128, 255));
+
+        Imshow.show(imageClone, "processing");
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {

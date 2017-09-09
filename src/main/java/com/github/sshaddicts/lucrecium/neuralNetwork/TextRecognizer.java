@@ -2,6 +2,7 @@ package com.github.sshaddicts.lucrecium.neuralNetwork;
 
 import com.github.sshaddicts.lucrecium.datasets.ImageDataSet;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
+import com.github.sshaddicts.lucrecium.imageProcessing.WordContainer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import java.io.IOException;
 
 public class TextRecognizer {
     private Mat image;
+    private WordContainer charContainer;
 
     private RichNeuralNet net = new RichNeuralNet(2);
     private ImageDataSet dataSet;
@@ -24,7 +26,7 @@ public class TextRecognizer {
         dataSet.initFromDirectory("daTestf");
     }
 
-    public String getText() {
+    public String getText(int i) {
 
         ImageProcessor proc = new ImageProcessor("testCase/good.jpg");
 
