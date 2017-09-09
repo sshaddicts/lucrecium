@@ -1,5 +1,7 @@
 package com.github.sshaddicts.lucrecium.imageProcessing;
 
+import com.github.sshaddicts.lucrecium.util.RectManipulator;
+import com.google.common.collect.Lists;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.opencv.core.*;
@@ -10,18 +12,22 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+//TODO add stream constructor
 public class ImageProcessor {
 
     private Mat image;
 
     private List<Rect> chars;
+    private List<Rect> words;
+    private List<WordContainer> wordCharAssoc;
 
     public static final int MERGE_WORDS = -5;
     public static final int MERGE_LINES = -20;
-    public static final int MERGE_CHARS = 2;
+    public static final int NO_MERGE = 2;
 
     private double resizeRate = 0.3;
     private boolean isRotationNeeded = false;
@@ -39,9 +45,11 @@ public class ImageProcessor {
                     + image.height() + ", width = " + image.width() + ".\n" +
                     "Requested filepath: " + filename + ", check it once again.");
         this.chars = new ArrayList<>();
+        this.words = new ArrayList<>();
+        this.wordCharAssoc = new ArrayList<>();
     }
 
-    public void needsRotation(boolean needsRotation){
+    public void needsRotation(boolean needsRotation) {
         this.isRotationNeeded = needsRotation;
     }
 
@@ -112,18 +120,21 @@ public class ImageProcessor {
         return result;
     }
 
-    public List<Mat> getTextRegions(int mergeType) {
+    public List<WordContainer> getTextRegions(int mergeType) {
         detectText(mergeType);
-        List<Mat> returnList = new ArrayList<>();
 
-        Mat source;
+        getWordRects();
 
-        for (Rect rect : chars) {
-            source = image.submat(rect);
-            returnList.add(source);
+        return wordCharAssoc;
+    }
+
+    public WordContainer getCharRegions(){
+        List<Mat> result = new ArrayList<>();
+
+        for (int i = 0; i < chars.size(); i++) {
+            result.add(image.submat(chars.get(i)));
         }
-
-        return returnList;
+        return new WordContainer(result, chars);
     }
 
     private Mat deskew(Mat src, double angle) {
@@ -142,7 +153,7 @@ public class ImageProcessor {
         Imgproc.adaptiveThreshold(tmpMat, tmpMat, 255,
                 Imgproc.ADAPTIVE_THRESH_MEAN_C,
                 Imgproc.THRESH_BINARY_INV,
-                21,22);
+                21, 22);
 
         Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
         Core.findNonZero(tmpMat, pointMat);
@@ -164,17 +175,18 @@ public class ImageProcessor {
 
     private void process() {
 
-        if(isRotationNeeded){
+        if (isRotationNeeded) {
             deskew(image);
         }
 
         resize();
 
-        image = adjustContrast(image, 5, -800);
+        image = adjustContrast(image, 5, -780);
 
         image = thresholdImage(image);
 
         image = cropImage();
+        log.debug("Image size is " + image.size());
     }
 
     private void detectText(int mergeType) {
@@ -190,12 +202,16 @@ public class ImageProcessor {
         contours.removeIf((mat) -> image.height() - mat.height() < 200);
         contours.removeIf((mat) -> mat.size().area() < 7);
 
-        if(mergeType == MERGE_CHARS){
-            chars = mergeInnerRects(contours, mergeType);
-        }else{
-            chars = mergeInnerRects(contours, mergeType);
-            chars = mergeCloseRects(chars, mergeType);
-        }
+        chars = mergeInnerRects(contours, mergeType);
+        chars.removeIf(rect -> rect.width < 4 || rect.height < 4);
+
+
+        chars = Lists.reverse(chars);
+
+        int meanHeight = calculateMean(chars, false);
+        chars = splitForThreshold(chars, meanHeight, false);
+
+        words = mergeCloseRects(chars);
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -222,18 +238,37 @@ public class ImageProcessor {
         return result;
     }
 
-    private List<Rect> mergeCloseRects(List<Rect> rects, int mergeType) {
+    private List<Rect> mergeCloseRects(List<Rect> rects) {
         List<Rect> mergedRects = new ArrayList<>();
 
-        for (int i = 0; i < rects.size(); i++) {
-            Rect rect = rects.get(i);
-            for (int j = i; j < rects.size(); j++) {
-                Rect otherRect = rects.get(j);
-                if (Math.abs((rect.y + rect.height / 2) - (otherRect.y + otherRect.height / 2)) == 0) {
-                    mergedRects.add(Validator.merge(rect, otherRect, mergeType));
+        int horizontalDistance, verticalDistance;
+        int mergedNumber;
+
+        for (int i = 0; i < rects.size(); i += mergedNumber) {
+            //line is over when we suddenly drop on x
+            mergedNumber = 1;
+            Rect resultingRect = rects.get(i);
+            int prevx = resultingRect.x;
+
+            for (int j = i + 1; j < rects.size(); j++) {
+                if (prevx < rects.get(j).x) {
+                    break;
+                } else {
+                    prevx = rects.get(j).x;
+                }
+
+                Rect toMerge = rects.get(j);
+                horizontalDistance = RectManipulator.getDistanceBetweenBorders(resultingRect, toMerge);
+
+                if (horizontalDistance < 30) {
+                    resultingRect = RectManipulator.merge(resultingRect, toMerge, -2);
+                    mergedNumber++;
                 }
             }
+            mergedRects.add(resultingRect);
         }
+
+        log.debug("Word merging done.");
 
         return mergedRects;
     }
@@ -317,6 +352,67 @@ public class ImageProcessor {
         for (MatOfPoint contour : contours) {
             result.add(Imgproc.boundingRect(contour));
         }
+        return result;
+    }
+
+    public List<WordContainer> getWordRects() {
+
+        if (words.size() == 0) {
+            throw new IllegalStateException("Word size is equal to 0, but should never be. " +
+                    "It is probably a severe bug. Consider using https://github.com/sshaddicts/Tracker/issues " +
+                    "to open an issue");
+        }
+
+        log.debug("Getting WordContainers... Expecting " + words.size() + " entries.");
+
+        for (Rect word : words) {
+            WordContainer container = new WordContainer(word);
+
+            List<Rect> characters = new ArrayList<>();
+            for (Rect character : chars) {
+                if (RectManipulator.contains(word, character)) {
+                    characters.add(character);
+                }
+            }
+
+            characters.sort(Comparator.comparingInt(rect -> rect.x));
+            container.setCharLocations(characters);
+
+            List<Mat> mats = new ArrayList<>();
+            for (Rect rect : characters) {
+                mats.add(image.submat(rect));
+            }
+
+            container.setChars(mats);
+            wordCharAssoc.add(container);
+        }
+
+        return wordCharAssoc;
+    }
+
+    private int calculateMean(List<Rect> rects, boolean horizontal) {
+        int total = 0;
+
+        for (Rect rect : rects) {
+            total += horizontal ? rect.width : rect.height;
+        }
+
+        return total / rects.size();
+    }
+
+    private List<Rect> splitForThreshold(List<Rect> rects, int mean, boolean horizontal) {
+        List<Rect> result = new ArrayList<>();
+
+        for (int i = 0; i < rects.size(); i++) {
+            Rect rect = rects.get(i);
+            if (rect.height > mean * 2) {
+                List<Rect> split = RectManipulator.split(rect, (int) Math.floor(rect.height / mean), horizontal);
+                result.addAll(split);
+            } else {
+                result.add(rect);
+            }
+        }
+
         return result;
     }
 }
