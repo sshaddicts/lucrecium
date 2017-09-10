@@ -21,6 +21,10 @@ public class WordContainer {
         this.charLocations = charLocations;
     }
 
+    public int getCharLength(){
+        return chars.size();
+    }
+
     public Rect getWordRect() {
         return word;
     }

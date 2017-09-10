@@ -27,11 +27,11 @@ import java.io.IOException;
 
 
 public class RichNeuralNet {
-    private final int ITERATIONS = 1;
-    private final double LEARNING_RATE = 0.006;
+    private final int ITERATIONS = 10;
+    private final double LEARNING_RATE = 0.001;
 
     private final boolean REGULARIZATION = true;
-    private final int SEED = 123;
+    private final int SEED = 7899;
 
     private Evaluation eval = new Evaluation();
 
@@ -145,22 +145,22 @@ public class RichNeuralNet {
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .updater(Updater.NESTEROVS) //To configure: .updater(new Nesterovs(0.9))
                 .list()
-                .layer(0, new ConvolutionLayer.Builder(5, 5)
+                .layer(0, new ConvolutionLayer.Builder(9, 9)
                         //nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
                         .nIn(1)
                         .stride(1, 1)
                         .nOut(20)
-                        .activation(Activation.IDENTITY)
+                        .activation(Activation.RELU)
                         .build())
                 .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
                         .kernelSize(2, 2)
                         .stride(2, 2)
                         .build())
-                .layer(2, new ConvolutionLayer.Builder(5, 5)
+                .layer(2, new ConvolutionLayer.Builder(3, 3)
                         //Note that nIn need not be specified in later layers
                         .stride(1, 1)
                         .nOut(50)
-                        .activation(Activation.IDENTITY)
+                        .activation(Activation.RELU)
                         .build())
                 .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
                         .kernelSize(2, 2)
@@ -169,7 +169,7 @@ public class RichNeuralNet {
                 .layer(4, new DenseLayer.Builder().activation(Activation.RELU)
                         .nOut(500).build())
                 .layer(5, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nOut(2)
+                        .nOut(outputLabelCount)
                         .activation(Activation.SOFTMAX)
                         .build())
                 .setInputType(InputType.convolutionalFlat(32, 32, 1))
@@ -209,6 +209,6 @@ public class RichNeuralNet {
     }
 
     public MultiLayerNetwork loadNetwork(String filename) throws IOException {
-        return ModelSerializer.restoreMultiLayerNetwork(filename);
+        return this.network = ModelSerializer.restoreMultiLayerNetwork(filename);
     }
 }

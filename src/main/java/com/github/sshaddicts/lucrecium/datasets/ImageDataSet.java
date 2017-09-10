@@ -1,14 +1,20 @@
 package com.github.sshaddicts.lucrecium.datasets;
 
+import com.github.sshaddicts.lucrecium.imageProcessing.WordContainer;
 import org.datavec.api.io.filters.BalancedPathFilter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
 import org.datavec.api.split.FileSplit;
 import org.datavec.api.split.InputSplit;
 import org.datavec.image.recordreader.ImageRecordReader;
+import org.datavec.image.transform.ImageTransform;
+import org.datavec.image.transform.ImageTransformProcess;
+import org.datavec.image.transform.ScaleImageTransform;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
+import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +36,15 @@ public class ImageDataSet {
 
     Logger log = LoggerFactory.getLogger(this.getClass());
 
+    private final WordContainer container;
+    private DataSet dataSet;
+
     public ImageDataSet(int outputLabelCount, int batchSize) {
+        this(null, outputLabelCount, batchSize);
+    }
+
+    public ImageDataSet(WordContainer container, int outputLabelCount, int batchSize){
+        this.container = container;
         this.outputLabelCount = outputLabelCount;
         this.batchSize = batchSize;
     }
@@ -43,16 +57,22 @@ public class ImageDataSet {
 
         ParentPathLabelGenerator labelMarker = new ParentPathLabelGenerator();
 
-        ImageRecordReader recordReader = new ImageRecordReader(18, 9, 1, labelMarker);
+        ImageRecordReader recordReader = new ImageRecordReader(32, 32, 1, labelMarker);
         this.pathFilter = new BalancedPathFilter(new Random(), allowedExtensions, labelMarker);
 
         this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, outputLabelCount);
-
+        DataNormalization scaler = new ImagePreProcessingScaler(0,1);
+        scaler.fit(this.iterator);
+        this.iterator.setPreProcessor(scaler);
         recordReader.initialize(fileSplit);
     }
 
-    public void addPreProcessor(DataSetPreProcessor preProcessor) {
-        this.iterator.setPreProcessor(preProcessor);
+    public void initFromContainer(){
+
+        ImageRecordReader recordReader = new ImageRecordReader();
+
+        DataSetIterator iter = new RecordReaderDataSetIterator(recordReader, batchSize, 1, outputLabelCount);
+
     }
 
     public void splitData(int train, int test) {
@@ -76,5 +96,4 @@ public class ImageDataSet {
     public DataSetIterator getIterator() {
         return iterator;
     }
-
 }

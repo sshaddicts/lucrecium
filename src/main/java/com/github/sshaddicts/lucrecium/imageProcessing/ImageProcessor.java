@@ -2,6 +2,8 @@ package com.github.sshaddicts.lucrecium.imageProcessing;
 
 import com.github.sshaddicts.lucrecium.util.RectManipulator;
 import com.google.common.collect.Lists;
+import org.bytedeco.javacv.OpenCVFrameConverter;
+import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.opencv.core.*;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -124,7 +127,7 @@ public class ImageProcessor {
     public List<WordContainer> getTextRegions(int mergeType) {
         detectText(mergeType);
 
-        getWordRects();
+        wordCharAssoc.add(getCharRegions());
 
         return wordCharAssoc;
     }
@@ -206,14 +209,13 @@ public class ImageProcessor {
         chars = mergeInnerRects(contours, mergeType);
         chars.removeIf(rect -> rect.width < 4 || rect.height < 4);
 
-
         chars = Lists.reverse(chars);
 
         int meanHeight = calculateMean(chars, false);
         chars = splitForThreshold(chars, meanHeight, false);
 
         words = mergeCloseRects(chars);
-        
+        OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -334,18 +336,9 @@ public class ImageProcessor {
         return byteData;
     }
 
-    public static INDArray toNdarray(Mat mat) {
-
-        byte[] matData = new byte[mat.width() * mat.height()];
-        double[] retData = new double[matData.length];
-
-        mat.get(0, 0, matData);
-
-        for (int i = 0; i < matData.length; i++) {
-            retData[i] = (double) matData[i];
-        }
-
-        return Nd4j.create(retData, new int[]{mat.width(), mat.height()});
+    public static INDArray toNdarray(Mat mat) throws IOException {
+        NativeImageLoader loader = new NativeImageLoader();
+        return loader.asMatrix(mat);
     }
 
     public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours) {

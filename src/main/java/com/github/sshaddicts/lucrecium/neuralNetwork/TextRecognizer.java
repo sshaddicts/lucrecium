@@ -12,6 +12,7 @@ import java.io.IOException;
 
 public class TextRecognizer {
     private Mat image;
+
     private WordContainer charContainer;
 
     private RichNeuralNet net = new RichNeuralNet(2);
@@ -19,24 +20,32 @@ public class TextRecognizer {
 
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
+
+    public WordContainer getCharContainer() {
+        return charContainer;
+    }
+
+    public void setCharContainer(WordContainer charContainer) {
+        this.charContainer = charContainer;
+    }
+
     public TextRecognizer() throws IOException {
         initNet();
 
-        dataSet = new ImageDataSet(2, 20);
-        dataSet.initFromDirectory("daTestf");
+        //dataSet = new ImageDataSet(2, 20);
+        //dataSet.initFromDirectory("daTestf");
     }
 
-    public String getText(int i) {
+    public String getText(int i) throws IOException {
 
         ImageProcessor proc = new ImageProcessor("testCase/good.jpg");
 
         int height = proc.getImage().height();
         int width = proc.getImage().width();
 
-
         for (int x = 0; x < width-32; x++) {
             for (int y = 0; y < height-32; y++) {
-                INDArray array = ImageProcessor.toNdarray(proc.submat(x,y,32,32)).reshape(32,32,1);
+                INDArray array = ImageProcessor.toNdarray(charContainer.getChars().get(i));
 
                 log.debug(array.shapeInfoToString());
                 net.train(array);
