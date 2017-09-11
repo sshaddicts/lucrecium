@@ -4,6 +4,6 @@ dataSources/
 testData/
 outputData/
 .idea/
-util/
+/util/
 *.iml
 *.log

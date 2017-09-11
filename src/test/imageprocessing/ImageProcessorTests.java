@@ -1,9 +1,12 @@
 package imageprocessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
+import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
+import com.github.sshaddicts.lucrecium.util.RectManipulator;
 import org.junit.Test;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,8 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ImageProcessorTests {
 
@@ -32,8 +34,8 @@ public class ImageProcessorTests {
     @Test
     public void imageContainsLetters() {
         ImageProcessor processor = new ImageProcessor(example);
-        List<Mat> mats = processor.getTextRegions(ImageProcessor.MERGE_LINES);
-        assertTrue("mat.size() is " + mats.size() + ", but should never be", mats.size() > 0);
+        List<CharContainer> words = processor.findTextRegions(ImageProcessor.NO_MERGE);
+        assertTrue("mat.size() is " + words.size() + ", but should never be", words.size() > 0);
     }
 
     @Test
@@ -43,7 +45,7 @@ public class ImageProcessorTests {
         Method deskew = processor.getClass().getDeclaredMethod("deskew", Mat.class);
         deskew.setAccessible(true);
 
-        Double result = (Double)deskew.invoke(processor, processor.getImage());
+        Double result = (Double) deskew.invoke(processor, processor.getImage());
         assertFalse(result == 0);
     }
 
@@ -56,5 +58,26 @@ public class ImageProcessorTests {
 
         Integer invoke = (Integer) lineNumberFor.invoke(processor, processor.getImage());
         assertTrue(invoke == 3);
+    }
+
+    @Test
+    public void testSplit() throws InterruptedException {
+        ImageProcessor processor = new ImageProcessor(lineSegm);
+        Rect rect = new Rect(0, 0, processor.getImage().width(), processor.getImage().height());
+
+        int mean = 22;
+        List<Rect> split = RectManipulator.split(rect, rect.height / mean, false);
+
+        assertTrue(split.size() == 3);
+    }
+
+    @Test
+    public void testMerge() {
+        Rect rect1 = new Rect(0, 0, 25, 25);
+        Rect rect2 = new Rect(25, 25, 25, 25);
+
+        Rect merged = RectManipulator.merge(rect1, rect2, 0);
+
+        assertEquals(50, merged.width);
     }
 }
