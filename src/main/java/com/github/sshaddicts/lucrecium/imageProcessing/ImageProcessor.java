@@ -1,8 +1,9 @@
 package com.github.sshaddicts.lucrecium.imageProcessing;
 
+import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
+import com.github.sshaddicts.lucrecium.imageProcessing.containers.WordContainer;
 import com.github.sshaddicts.lucrecium.util.RectManipulator;
 import com.google.common.collect.Lists;
-import org.bytedeco.javacv.OpenCVFrameConverter;
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -18,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
 
 //TODO add stream constructor
 public class ImageProcessor {
@@ -27,7 +27,8 @@ public class ImageProcessor {
 
     private List<Rect> chars;
     private List<Rect> words;
-    private List<WordContainer> wordCharAssoc;
+    private List<CharContainer> charsList;
+    private List<WordContainer> wordsList;
 
     public static final int MERGE_WORDS = -5;
     public static final int MERGE_LINES = -20;
@@ -50,7 +51,7 @@ public class ImageProcessor {
                     "Requested filepath: " + filename + ", check it once again.");
         this.chars = new ArrayList<>();
         this.words = new ArrayList<>();
-        this.wordCharAssoc = new ArrayList<>();
+        this.wordsList = new ArrayList<>();
     }
 
     public void needsRotation(boolean needsRotation) {
@@ -74,8 +75,8 @@ public class ImageProcessor {
             throw new IllegalArgumentException("Image size is illegal" + image.size().toString());
         }
 
-        if (image.height() < 500) {
-            resizeRate *= 2.5;
+        if (image.height() < 500 || image.width() < 500) {
+            resizeRate = 1;
         }
 
         Mat tempMat = new Mat(image.height(), image.width(), image.type());
@@ -100,7 +101,7 @@ public class ImageProcessor {
         for (Mat mat : contours) {
             if (Imgproc.contourArea(mat) > tmpImage.rows() * tmpImage.cols() / 4) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
-                if (rect.height > 50) {
+                if (rect.height > 50 && rect.height != image.height()) {
                     rect.x -= 1;
                     rect.y -= 1;
                     rect.width += 1;
@@ -127,18 +128,25 @@ public class ImageProcessor {
     public List<WordContainer> getTextRegions(int mergeType) {
         detectText(mergeType);
 
-        wordCharAssoc.add(getCharRegions());
+        getWordRects();
 
-        return wordCharAssoc;
+        return wordsList;
     }
 
-    public WordContainer getCharRegions(){
-        List<Mat> result = new ArrayList<>();
+    public List<CharContainer> getCharRegions() {
+        detectText(NO_MERGE);
+        charsList = new ArrayList<>();
 
         for (int i = 0; i < chars.size(); i++) {
-            result.add(image.submat(chars.get(i)));
+            Rect rect = chars.get(i);
+            charsList.add(new CharContainer(image.submat(rect),rect));
+
         }
-        return new WordContainer(result, chars);
+
+        charsList.sort(Comparator.comparingInt(rect -> rect.getRect().y));
+        //charsList.sort(Comparator.comparingInt(rect -> rect.getRect().x));
+
+        return charsList;
     }
 
     private Mat deskew(Mat src, double angle) {
@@ -203,7 +211,11 @@ public class ImageProcessor {
                 Imgproc.RETR_TREE,
                 Imgproc.CHAIN_APPROX_NONE);
 
-        contours.removeIf((mat) -> image.height() - mat.height() < 200);
+
+        if(image.height() > 500){
+            contours.removeIf((mat) -> image.height() - mat.height() < 200);
+        }
+
         contours.removeIf((mat) -> mat.size().area() < 7);
 
         chars = mergeInnerRects(contours, mergeType);
@@ -215,7 +227,12 @@ public class ImageProcessor {
         chars = splitForThreshold(chars, meanHeight, false);
 
         words = mergeCloseRects(chars);
-        OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
+
+        Mat imageClone = image.clone();
+        Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
+        drawContours(image, contours, new Scalar(255, 128, 0));
+
+        Imshow.show(imageClone, "klekr");
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -316,13 +333,13 @@ public class ImageProcessor {
         return result;
     }
 
-    private void drawRects(Mat image, List<Rect> rects, Scalar color) {
+    public void drawRects(Mat image, List<Rect> rects, Scalar color) {
         for (Rect rect : rects) {
             Imgproc.rectangle(image, rect.tl(), rect.br(), color, 1);
         }
     }
 
-    private void drawContours(Mat image, List<MatOfPoint> contours, Scalar color) {
+    public void drawContours(Mat image, List<MatOfPoint> contours, Scalar color) {
         Imgproc.drawContours(image, contours, -1, color, -1);
     }
 
@@ -338,7 +355,18 @@ public class ImageProcessor {
 
     public static INDArray toNdarray(Mat mat) throws IOException {
         NativeImageLoader loader = new NativeImageLoader();
-        return loader.asMatrix(mat);
+        INDArray arr = loader.asMatrix(mat);
+
+        byte[] matData = new byte[mat.width() * mat.height()];
+        double[] retData = new double[matData.length];
+
+        mat.get(0, 0, matData);
+
+        for (int i = 0; i < matData.length; i++) {
+            retData[i] = (double) matData[i];
+        }
+
+        return Nd4j.create(retData, new int[]{mat.width(), mat.height()});
     }
 
     public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours) {
@@ -379,10 +407,10 @@ public class ImageProcessor {
             }
 
             container.setChars(mats);
-            wordCharAssoc.add(container);
+            wordsList.add(container);
         }
 
-        return wordCharAssoc;
+        return wordsList;
     }
 
     private int calculateMean(List<Rect> rects, boolean horizontal) {

@@ -1,17 +1,13 @@
 package com.github.sshaddicts.lucrecium.datasets;
 
-import com.github.sshaddicts.lucrecium.imageProcessing.WordContainer;
+import com.github.sshaddicts.lucrecium.imageProcessing.containers.WordContainer;
 import org.datavec.api.io.filters.BalancedPathFilter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
 import org.datavec.api.split.FileSplit;
 import org.datavec.api.split.InputSplit;
 import org.datavec.image.recordreader.ImageRecordReader;
-import org.datavec.image.transform.ImageTransform;
-import org.datavec.image.transform.ImageTransformProcess;
-import org.datavec.image.transform.ScaleImageTransform;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.nd4j.linalg.dataset.DataSet;
-import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
@@ -22,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
+//TODO refactor
 public class ImageDataSet {
 
     private FileSplit fileSplit;
@@ -37,7 +34,18 @@ public class ImageDataSet {
     Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final WordContainer container;
-    private DataSet dataSet;
+
+
+    private ImageRecordReader recordReader;
+
+
+    public ImageRecordReader getRecordReader() {
+        return recordReader;
+    }
+
+    public void setRecordReader(ImageRecordReader recordReader) {
+        this.recordReader = recordReader;
+    }
 
     public ImageDataSet(int outputLabelCount, int batchSize) {
         this(null, outputLabelCount, batchSize);
@@ -57,8 +65,9 @@ public class ImageDataSet {
 
         ParentPathLabelGenerator labelMarker = new ParentPathLabelGenerator();
 
-        ImageRecordReader recordReader = new ImageRecordReader(32, 32, 1, labelMarker);
+        this.recordReader = new ImageRecordReader(32, 32, 1, labelMarker);
         this.pathFilter = new BalancedPathFilter(new Random(), allowedExtensions, labelMarker);
+
 
         this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, outputLabelCount);
         DataNormalization scaler = new ImagePreProcessingScaler(0,1);

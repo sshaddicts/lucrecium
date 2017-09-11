@@ -1,15 +1,12 @@
 package imageprocessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
-import com.github.sshaddicts.lucrecium.imageProcessing.Imshow;
-import com.github.sshaddicts.lucrecium.imageProcessing.WordContainer;
+import com.github.sshaddicts.lucrecium.imageProcessing.containers.WordContainer;
 import com.github.sshaddicts.lucrecium.util.RectManipulator;
 import org.junit.Test;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
