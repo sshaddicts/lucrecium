@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 //TODO add stream constructor
 public class ImageProcessor {
@@ -139,8 +141,13 @@ public class ImageProcessor {
             charsList.add(new CharContainer(image.submat(rect), rect));
         }
 
-        charsList.sort(Comparator.comparingInt(rect -> rect.getRect().y));
-
+        charsList.sort(new Comparator<CharContainer>() {
+            @Override
+            public int compare(CharContainer charContainer, CharContainer t1) {
+                return charContainer.getRect().y - t1.getRect().y;
+            }
+        });
+        
         return charsList;
     }
 
@@ -204,13 +211,33 @@ public class ImageProcessor {
                 Imgproc.CHAIN_APPROX_NONE);
 
         if (image.height() > 500) {
-            contours.removeIf((mat) -> image.height() - mat.height() < 200);
+
+            for (int i = 0; i < contours.size(); i++) {
+                MatOfPoint cont = contours.get(i);
+
+                if(image.height() - cont.height() < 200){
+                    contours.remove(i);
+                }
+            }
+        }
+        for (int i = 0; i < contours.size(); i++) {
+            MatOfPoint cont = contours.get(i);
+
+            if(cont.size().area() < 7){
+                contours.remove(i);
+            }
         }
 
-        contours.removeIf((mat) -> mat.size().area() < 7);
+
 
         chars = mergeInnerRects(contours, mergeType);
-        chars.removeIf(rect -> rect.width < 4 || rect.height < 4);
+
+        for (int i = 0; i < chars.size(); i++) {
+            Rect current = chars.get(i);
+            if( current.width < 4 || current.height < 4){
+                chars.remove(i);
+            }
+        }
 
         chars = Lists.reverse(chars);
 
