@@ -227,12 +227,6 @@ public class ImageProcessor {
         chars = splitForThreshold(chars, meanHeight, false);
 
         words = mergeCloseRects(chars);
-
-        Mat imageClone = image.clone();
-        Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
-        drawContours(image, contours, new Scalar(255, 128, 0));
-
-        Imshow.show(imageClone, "klekr");
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
