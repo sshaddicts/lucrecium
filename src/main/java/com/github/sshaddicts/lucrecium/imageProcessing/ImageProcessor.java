@@ -55,6 +55,16 @@ public class ImageProcessor {
         this.chars = new ArrayList<>();
     }
 
+    public ImageProcessor(Mat mat){
+        Objects.requireNonNull(mat);
+
+        if(mat.width() == 0 || mat.height() == 0){
+            throw new IllegalArgumentException("mat cannot be null!");
+        }
+        this.image = mat;
+        this.charsList = new ArrayList<>();
+    }
+
     public void needsRotation(boolean needsRotation) {
         this.isRotationNeeded = needsRotation;
     }
@@ -102,7 +112,7 @@ public class ImageProcessor {
         for (Mat mat : contours) {
             if (Imgproc.contourArea(mat) > tmpImage.rows() * tmpImage.cols() / 4) {
                 Rect rect = Imgproc.boundingRect((MatOfPoint) mat);
-                if (rect.height > 50 && rect.height != image.height()) {
+                if (rect.height > 50 && (rect.height != image.height() || rect.width != image.width())) {
                     rect.x -= 1;
                     rect.y -= 1;
                     rect.width += 1;
@@ -133,7 +143,6 @@ public class ImageProcessor {
     }
 
     public List<CharContainer> constructCharRegions() {
-        detectText(NO_MERGE);
         charsList = new ArrayList<>();
 
         for (int i = 0; i < chars.size(); i++) {
