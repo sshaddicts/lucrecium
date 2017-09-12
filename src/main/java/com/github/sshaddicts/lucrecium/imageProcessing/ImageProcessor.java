@@ -2,7 +2,6 @@ package com.github.sshaddicts.lucrecium.imageProcessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
 import com.github.sshaddicts.lucrecium.util.RectManipulator;
-import com.google.common.collect.Lists;
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -14,12 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
+import java.util.*;
 
 //TODO add stream constructor
 public class ImageProcessor {
@@ -150,13 +144,13 @@ public class ImageProcessor {
             charsList.add(new CharContainer(image.submat(rect), rect));
         }
 
-        charsList.sort(new Comparator<CharContainer>() {
+        Collections.sort(charsList, new Comparator<CharContainer>() {
             @Override
             public int compare(CharContainer charContainer, CharContainer t1) {
                 return charContainer.getRect().y - t1.getRect().y;
             }
         });
-        
+
         return charsList;
     }
 
@@ -237,8 +231,6 @@ public class ImageProcessor {
             }
         }
 
-
-
         chars = mergeInnerRects(contours, mergeType);
 
         for (int i = 0; i < chars.size(); i++) {
@@ -248,7 +240,7 @@ public class ImageProcessor {
             }
         }
 
-        chars = Lists.reverse(chars);
+        Collections.reverse(chars);
 
         int meanHeight = calculateMean(chars, false);
         chars = splitForThreshold(chars, meanHeight, false);
