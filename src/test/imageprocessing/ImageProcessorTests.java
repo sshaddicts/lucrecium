@@ -1,7 +1,7 @@
 package imageprocessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
-import com.github.sshaddicts.lucrecium.imageProcessing.containers.WordContainer;
+import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
 import com.github.sshaddicts.lucrecium.util.RectManipulator;
 import org.junit.Test;
 import org.opencv.core.Core;
@@ -36,7 +36,7 @@ public class ImageProcessorTests {
     @Test
     public void imageContainsLetters() {
         ImageProcessor processor = new ImageProcessor(example);
-        List<WordContainer> words = processor.getTextRegions(ImageProcessor.NO_MERGE);
+        List<CharContainer> words = processor.findTextRegions(ImageProcessor.NO_MERGE);
         assertTrue("mat.size() is " + words.size() + ", but should never be", words.size() > 0);
     }
 

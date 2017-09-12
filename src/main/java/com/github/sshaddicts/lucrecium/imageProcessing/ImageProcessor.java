@@ -1,7 +1,6 @@
 package com.github.sshaddicts.lucrecium.imageProcessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
-import com.github.sshaddicts.lucrecium.imageProcessing.containers.WordContainer;
 import com.github.sshaddicts.lucrecium.util.RectManipulator;
 import com.google.common.collect.Lists;
 import org.datavec.image.loader.NativeImageLoader;
@@ -26,9 +25,11 @@ public class ImageProcessor {
     private Mat image;
 
     private List<Rect> chars;
-    private List<Rect> words;
     private List<CharContainer> charsList;
-    private List<WordContainer> wordsList;
+
+    public List<CharContainer> getChars(){
+        return charsList;
+    }
 
     public static final int MERGE_WORDS = -5;
     public static final int MERGE_LINES = -20;
@@ -50,8 +51,6 @@ public class ImageProcessor {
                     + image.height() + ", width = " + image.width() + ".\n" +
                     "Requested filepath: " + filename + ", check it once again.");
         this.chars = new ArrayList<>();
-        this.words = new ArrayList<>();
-        this.wordsList = new ArrayList<>();
     }
 
     public void needsRotation(boolean needsRotation) {
@@ -125,26 +124,22 @@ public class ImageProcessor {
         return result;
     }
 
-    public List<WordContainer> getTextRegions(int mergeType) {
+    public List<CharContainer> findTextRegions(int mergeType) {
         detectText(mergeType);
 
-        getWordRects();
-
-        return wordsList;
+        return constructCharRegions();
     }
 
-    public List<CharContainer> getCharRegions() {
+    public List<CharContainer> constructCharRegions() {
         detectText(NO_MERGE);
         charsList = new ArrayList<>();
 
         for (int i = 0; i < chars.size(); i++) {
             Rect rect = chars.get(i);
             charsList.add(new CharContainer(image.submat(rect),rect));
-
         }
 
         charsList.sort(Comparator.comparingInt(rect -> rect.getRect().y));
-        //charsList.sort(Comparator.comparingInt(rect -> rect.getRect().x));
 
         return charsList;
     }
@@ -160,7 +155,6 @@ public class ImageProcessor {
     }
 
     private double deskew(Mat src) {
-
         Mat tmpMat = src.clone();
         Imgproc.adaptiveThreshold(tmpMat, tmpMat, 255,
                 Imgproc.ADAPTIVE_THRESH_MEAN_C,
@@ -186,7 +180,6 @@ public class ImageProcessor {
     }
 
     private void process() {
-
         if (isRotationNeeded) {
             deskew(image);
         }
@@ -194,7 +187,6 @@ public class ImageProcessor {
         resize();
 
         image = adjustContrast(image, 5, -780);
-
         image = thresholdImage(image);
 
         image = cropImage();
@@ -211,7 +203,6 @@ public class ImageProcessor {
                 Imgproc.RETR_TREE,
                 Imgproc.CHAIN_APPROX_NONE);
 
-
         if(image.height() > 500){
             contours.removeIf((mat) -> image.height() - mat.height() < 200);
         }
@@ -225,8 +216,6 @@ public class ImageProcessor {
 
         int meanHeight = calculateMean(chars, false);
         chars = splitForThreshold(chars, meanHeight, false);
-
-        words = mergeCloseRects(chars);
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -251,46 +240,6 @@ public class ImageProcessor {
         log.debug("ROI number after merging inner rects: " + result.size());
 
         return result;
-    }
-
-    private List<Rect> mergeCloseRects(List<Rect> rects) {
-        List<Rect> mergedRects = new ArrayList<>();
-
-        int horizontalDistance, verticalDistance;
-        int mergedNumber;
-
-        for (int i = 0; i < rects.size(); i += mergedNumber) {
-            //line is over when we suddenly drop on x
-            mergedNumber = 1;
-            Rect resultingRect = rects.get(i);
-            int prevx = resultingRect.x;
-
-            for (int j = i + 1; j < rects.size(); j++) {
-                if (prevx < rects.get(j).x) {
-                    break;
-                } else {
-                    prevx = rects.get(j).x;
-                }
-
-                Rect toMerge = rects.get(j);
-                horizontalDistance = RectManipulator.getDistanceBetweenBorders(resultingRect, toMerge);
-
-                if (horizontalDistance < 30) {
-                    resultingRect = RectManipulator.merge(resultingRect, toMerge, -2);
-                    mergedNumber++;
-                }
-            }
-            mergedRects.add(resultingRect);
-        }
-
-        log.debug("Word merging done.");
-
-        return mergedRects;
-    }
-
-    public Mat submat(int x, int y, int width, int height) {
-        Rect rect = new Rect(x, y, width, height);
-        return image.submat(rect);
     }
 
     public int approximateLineNumberFor(Mat m) {
@@ -327,16 +276,6 @@ public class ImageProcessor {
         return result;
     }
 
-    public void drawRects(Mat image, List<Rect> rects, Scalar color) {
-        for (Rect rect : rects) {
-            Imgproc.rectangle(image, rect.tl(), rect.br(), color, 1);
-        }
-    }
-
-    public void drawContours(Mat image, List<MatOfPoint> contours, Scalar color) {
-        Imgproc.drawContours(image, contours, -1, color, -1);
-    }
-
     public static BufferedImage toBufferedImage(Mat image) {
         return Imshow.toBufferedImage(image);
     }
@@ -361,50 +300,6 @@ public class ImageProcessor {
         }
 
         return Nd4j.create(retData, new int[]{mat.width(), mat.height()});
-    }
-
-    public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours) {
-        ArrayList<Rect> result = new ArrayList<>();
-
-        for (MatOfPoint contour : contours) {
-            result.add(Imgproc.boundingRect(contour));
-        }
-        return result;
-    }
-
-    public List<WordContainer> getWordRects() {
-
-        if (words.size() == 0) {
-            throw new IllegalStateException("Word size is equal to 0, but should never be. " +
-                    "It is probably a severe bug. Consider using https://github.com/sshaddicts/Tracker/issues " +
-                    "to open an issue");
-        }
-
-        log.debug("Getting WordContainers... Expecting " + words.size() + " entries.");
-
-        for (Rect word : words) {
-            WordContainer container = new WordContainer(word);
-
-            List<Rect> characters = new ArrayList<>();
-            for (Rect character : chars) {
-                if (RectManipulator.contains(word, character)) {
-                    characters.add(character);
-                }
-            }
-
-            characters.sort(Comparator.comparingInt(rect -> rect.x));
-            container.setCharLocations(characters);
-
-            List<Mat> mats = new ArrayList<>();
-            for (Rect rect : characters) {
-                mats.add(image.submat(rect));
-            }
-
-            container.setChars(mats);
-            wordsList.add(container);
-        }
-
-        return wordsList;
     }
 
     private int calculateMean(List<Rect> rects, boolean horizontal) {
