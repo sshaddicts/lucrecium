@@ -42,7 +42,7 @@ public class ImageDataSet {
         this.recordReader = new ImageRecordReader(32, 32, 1, labelMarker);
 
         this.iterator = new RecordReaderDataSetIterator(recordReader, batchSize, 1, outputLabelCount);
-        DataNormalization scaler = new ImagePreProcessingScaler(0,1);
+        DataNormalization scaler = new ImagePreProcessingScaler(0, 1);
         scaler.fit(this.iterator);
         this.iterator.setPreProcessor(scaler);
         recordReader.initialize(fileSplit);

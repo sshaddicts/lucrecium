@@ -5,7 +5,6 @@ import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
-import org.deeplearning4j.nn.conf.distribution.Distribution;
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
@@ -14,11 +13,9 @@ import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.ModelSerializer;
-import org.jfree.util.Log;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
-import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +44,10 @@ public class RichNeuralNet {
     public RichNeuralNet(int outputLabelCount) {
         this.outputLabelCount = outputLabelCount;
     }
-    public RichNeuralNet(MultiLayerNetwork net){this.network = net;}
+
+    public RichNeuralNet(MultiLayerNetwork net) {
+        this.network = net;
+    }
 
     public MultiLayerNetwork getNet() {
         return network;
@@ -107,6 +107,10 @@ public class RichNeuralNet {
 
     public void train(INDArray data) {
         network.fit(data);
+    }
+
+    public int[] predict(INDArray data) {
+        return network.predict(data);
     }
 
     public void eval(INDArray input, INDArray actual) {

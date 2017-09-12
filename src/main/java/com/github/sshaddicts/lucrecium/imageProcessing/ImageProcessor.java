@@ -27,7 +27,7 @@ public class ImageProcessor {
     private List<Rect> chars;
     private List<CharContainer> charsList;
 
-    public List<CharContainer> getChars(){
+    public List<CharContainer> getChars() {
         return charsList;
     }
 
@@ -136,7 +136,7 @@ public class ImageProcessor {
 
         for (int i = 0; i < chars.size(); i++) {
             Rect rect = chars.get(i);
-            charsList.add(new CharContainer(image.submat(rect),rect));
+            charsList.add(new CharContainer(image.submat(rect), rect));
         }
 
         charsList.sort(Comparator.comparingInt(rect -> rect.getRect().y));
@@ -203,7 +203,7 @@ public class ImageProcessor {
                 Imgproc.RETR_TREE,
                 Imgproc.CHAIN_APPROX_NONE);
 
-        if(image.height() > 500){
+        if (image.height() > 500) {
             contours.removeIf((mat) -> image.height() - mat.height() < 200);
         }
 

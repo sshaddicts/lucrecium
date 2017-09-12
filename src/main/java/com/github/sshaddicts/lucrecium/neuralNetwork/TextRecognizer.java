@@ -4,9 +4,12 @@ import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
 import org.datavec.image.loader.Java2DNativeImageLoader;
 import org.datavec.image.loader.NativeImageLoader;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 
@@ -31,7 +34,13 @@ public class TextRecognizer {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < containerSize; i++) {
-            Integer in = net.getNet().predict(loader.asMatrix(ImageProcessor.toBufferedImage(containers.get(i).getMat())))[0];
+
+            Mat slice = containers.get(i).getMat();
+            BufferedImage bufferedSlice = ImageProcessor.toBufferedImage(slice);
+
+            INDArray array = loader.asMatrix(bufferedSlice);
+
+            Integer in = net.predict(array)[0];
             sb.append(in).append(" ");
         }
 

@@ -7,10 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 
 public class FileInteractions {
@@ -18,22 +16,18 @@ public class FileInteractions {
     private static Logger log = LoggerFactory.getLogger(FileInteractions.class);
 
     public static void saveMats(List<Mat> list, String directory) {
-        int i = 0;
         for (Mat mat : list) {
             saveMat(mat, directory);
-            i++;
         }
-        log.debug("Saved " + i + " mats");
     }
 
     public static void saveMat(Mat mat, String directory) {
         File f = new File(directory);
 
-        if(!f.exists()){
-            if(!f.mkdir()){
-                throw new IllegalArgumentException("directory is hacked: " + directory);
-            }
+        if (!f.exists() && !f.mkdir()) {
+            throw new IllegalArgumentException("directory is hacked: " + directory);
         }
+
         Imgcodecs.imwrite(directory + "/image_" + System.nanoTime() + ".png", mat);
     }
 

@@ -14,9 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ImageProcessorTests {
 
@@ -47,7 +45,7 @@ public class ImageProcessorTests {
         Method deskew = processor.getClass().getDeclaredMethod("deskew", Mat.class);
         deskew.setAccessible(true);
 
-        Double result = (Double)deskew.invoke(processor, processor.getImage());
+        Double result = (Double) deskew.invoke(processor, processor.getImage());
         assertFalse(result == 0);
     }
 
@@ -65,7 +63,7 @@ public class ImageProcessorTests {
     @Test
     public void testSplit() throws InterruptedException {
         ImageProcessor processor = new ImageProcessor(lineSegm);
-        Rect rect = new Rect(0,0,processor.getImage().width(), processor.getImage().height());
+        Rect rect = new Rect(0, 0, processor.getImage().width(), processor.getImage().height());
 
         int mean = 22;
         List<Rect> split = RectManipulator.split(rect, rect.height / mean, false);
@@ -74,9 +72,9 @@ public class ImageProcessorTests {
     }
 
     @Test
-    public void testMerge(){
-        Rect rect1 = new Rect(0,0,25,25);
-        Rect rect2 = new Rect(25,25,25,25);
+    public void testMerge() {
+        Rect rect1 = new Rect(0, 0, 25, 25);
+        Rect rect2 = new Rect(25, 25, 25, 25);
 
         Rect merged = RectManipulator.merge(rect1, rect2, 0);
 
