@@ -9,13 +9,12 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.java2d.pipe.BufferedBufImgOps;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.*;
 
-//TODO add stream constructor
+
 public class ImageProcessor {
 
     private Mat image;
@@ -243,7 +242,7 @@ public class ImageProcessor {
         chars = splitForThreshold(chars, meanHeight, false);
 
         log.debug("Contours size: " + contours.size());
-        
+
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {

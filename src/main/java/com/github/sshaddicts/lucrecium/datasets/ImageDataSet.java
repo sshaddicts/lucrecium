@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-//TODO refactor
 public class ImageDataSet {
 
     private DataSetIterator iterator;

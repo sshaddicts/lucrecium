@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
-public class CharContainer implements Comparable{
+public class CharContainer implements Comparable {
     private final Mat mat;
     private final Rect rect;
 
@@ -25,12 +25,10 @@ public class CharContainer implements Comparable{
     public int compareTo(@NotNull Object o) {
         Rect comparable = ((CharContainer) o).getRect();
 
-        if(Math.abs(comparable.y - rect.y) > 5){
+        if (Math.abs(comparable.y - rect.y) > 5) {
             return rect.y - comparable.y;
-        }else{
+        } else {
             return rect.x - comparable.x;
         }
-
-
     }
 }

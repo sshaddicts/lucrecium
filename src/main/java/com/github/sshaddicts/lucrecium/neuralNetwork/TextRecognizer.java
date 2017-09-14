@@ -1,12 +1,17 @@
 package com.github.sshaddicts.lucrecium.neuralNetwork;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
-import com.github.sshaddicts.lucrecium.util.RectManipulator;
+import jdk.nashorn.internal.runtime.regexp.joni.ast.StringNode;
 import org.datavec.image.loader.Java2DNativeImageLoader;
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +29,9 @@ public class TextRecognizer {
         net = new RichNeuralNet(RichNeuralNet.loadNetwork(filename));
     }
 
-    //TODO set offset correctly, for now outputs a one-line string
-    public String getText(List<CharContainer> containers) throws IOException {
+
+    //TODO refactor
+    public ObjectNode getText(List<CharContainer> containers) throws IOException {
         NativeImageLoader loader = new Java2DNativeImageLoader(32, 32, 1);
 
         int containerSize = containers.size();
@@ -34,19 +40,30 @@ public class TextRecognizer {
 
         StringBuilder sb = new StringBuilder();
 
-        int prevX = containers.get(0).getRect().x;
         int prevY = containers.get(0).getRect().y;
 
+        final JsonNodeFactory factory = JsonNodeFactory.instance;
+        ObjectNode root = factory.objectNode();
+
+        ArrayNode entries = root.putArray("entries");
 
         for (int i = 0; i < containerSize; i++) {
-            int currentY = containers.get(i).getRect().y;
+            Rect rect = containers.get(i).getRect();
 
-            if(Math.abs(currentY - prevY) > 10){
-                sb.append("\n");
+            int currentY = rect.y;
+
+            //the line ends at this condition
+            if (Math.abs(currentY - prevY) > 10) {
+                ObjectNode entry = factory.objectNode();
+
+                double v = Double.parseDouble(sb.toString());
+                entry.put("entry_" + i, v);
+
+                entries.add(entry);
+                sb.delete(0, sb.length());
             }
 
             prevY = currentY;
-
 
             Mat slice = containers.get(i).getMat();
             BufferedImage bufferedSlice = ImageProcessor.toBufferedImage(slice);
@@ -57,6 +74,13 @@ public class TextRecognizer {
             sb.append(in);
         }
 
-        return sb.toString();
+        ObjectNode entry = factory.objectNode();
+
+        double v = Double.parseDouble(sb.toString());
+        entry.put("last_entry", v);
+        entries.add(entry);
+
+        System.out.println(sb.toString());
+        return root;
     }
 }
