@@ -58,6 +58,19 @@ public class ImageProcessor {
         this.charsList = new ArrayList<>();
     }
 
+    public ImageProcessor(byte[] array, int width, int height){
+        if(array.length == 0){
+            throw new IllegalArgumentException("Array can not be of length 0");
+        }
+        if(width == 0 || height == 0){
+            throw new IllegalArgumentException("Height or width is equal to 0. THIS IS INACCEPTIBLE");
+        }
+
+        this.image = Mat.zeros(height, width, CvType.CV_8UC1);
+        this.image.put(0,0,array);
+        this.chars = new ArrayList<>();
+    }
+
     public void needsRotation(boolean needsRotation) {
         this.isRotationNeeded = needsRotation;
     }
@@ -307,9 +320,9 @@ public class ImageProcessor {
         return Imshow.toBufferedImage(image);
     }
 
-    public static byte[] toByteArray(Mat image) {
-        byte[] byteData = new byte[image.height() * image.width()];
-        image.get(0, 0, byteData);
+    public static byte[] toByteArray(Mat src) {
+        byte[] byteData = new byte[src.height() * src.width() * src.channels()];
+        src.get(0, 0, byteData);
         return byteData;
     }
 
