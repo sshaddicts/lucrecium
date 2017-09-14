@@ -2,7 +2,6 @@ package com.github.sshaddicts.lucrecium.imageProcessing;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
 import com.github.sshaddicts.lucrecium.util.RectManipulator;
-import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.opencv.core.*;
@@ -10,6 +9,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.java2d.pipe.BufferedBufImgOps;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -49,10 +49,10 @@ public class ImageProcessor {
         this.chars = new ArrayList<>();
     }
 
-    public ImageProcessor(Mat mat){
+    public ImageProcessor(Mat mat) {
         Objects.requireNonNull(mat);
 
-        if(mat.width() == 0 || mat.height() == 0){
+        if (mat.width() == 0 || mat.height() == 0) {
             throw new IllegalArgumentException("mat cannot be null!");
         }
         this.image = mat;
@@ -144,12 +144,7 @@ public class ImageProcessor {
             charsList.add(new CharContainer(image.submat(rect), rect));
         }
 
-        Collections.sort(charsList, new Comparator<CharContainer>() {
-            @Override
-            public int compare(CharContainer charContainer, CharContainer t1) {
-                return charContainer.getRect().y - t1.getRect().y;
-            }
-        });
+        Collections.sort(charsList);
 
         return charsList;
     }
@@ -213,37 +208,42 @@ public class ImageProcessor {
                 Imgproc.RETR_TREE,
                 Imgproc.CHAIN_APPROX_NONE);
 
+
         if (image.height() > 500) {
+            for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext(); ) {
+                MatOfPoint cont = it.next();
 
-            for (int i = 0; i < contours.size(); i++) {
-                MatOfPoint cont = contours.get(i);
-
-                if(image.height() - cont.height() < 200){
-                    contours.remove(i);
+                if (image.height() - cont.height() < 200) {
+                    it.remove();
                 }
             }
         }
-        for (int i = 0; i < contours.size(); i++) {
-            MatOfPoint cont = contours.get(i);
 
-            if(cont.size().area() < 7){
-                contours.remove(i);
+        for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext(); ) {
+            MatOfPoint cont = it.next();
+
+            if (cont.size().area() < 7) {
+                it.remove();
             }
         }
 
         chars = mergeInnerRects(contours, mergeType);
 
-        for (int i = 0; i < chars.size(); i++) {
-            Rect current = chars.get(i);
-            if( current.width < 4 || current.height < 4){
-                chars.remove(i);
+        for (Iterator<Rect> rectIterator = chars.iterator(); rectIterator.hasNext(); ) {
+            Rect current = rectIterator.next();
+            if (current.width < 5 || current.height < 5) {
+                rectIterator.remove();
             }
         }
 
         Collections.reverse(chars);
 
+
         int meanHeight = calculateMean(chars, false);
         chars = splitForThreshold(chars, meanHeight, false);
+
+        log.debug("Contours size: " + contours.size());
+        Imshow.show(getOverlay(), "overlay");
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
@@ -315,9 +315,6 @@ public class ImageProcessor {
     }
 
     public static INDArray toNdarray(Mat mat) throws IOException {
-        NativeImageLoader loader = new NativeImageLoader();
-        INDArray arr = loader.asMatrix(mat);
-
         byte[] matData = new byte[mat.width() * mat.height()];
         double[] retData = new double[matData.length];
 
@@ -354,5 +351,25 @@ public class ImageProcessor {
         }
 
         return result;
+    }
+
+    public Mat getOverlay() {
+        Mat imageClone = Mat.zeros(image.size(), 16);
+        Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
+        log.debug("debug image type is " + imageClone.type());
+
+        drawRects(imageClone, chars, new Scalar(0, 128, 255));
+
+        return imageClone;
+    }
+
+    public void drawRects(Mat image, List<Rect> rects, Scalar color) {
+        for (Rect rect : rects) {
+            Imgproc.rectangle(image, rect.tl(), rect.br(), color, 1);
+        }
+    }
+
+    public void drawContours(Mat image, List<MatOfPoint> contours, Scalar color) {
+        Imgproc.drawContours(image, contours, -1, color, -1);
     }
 }

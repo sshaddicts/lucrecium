@@ -2,6 +2,7 @@ package com.github.sshaddicts.lucrecium.neuralNetwork;
 
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
+import com.github.sshaddicts.lucrecium.util.RectManipulator;
 import org.datavec.image.loader.Java2DNativeImageLoader;
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -33,7 +34,19 @@ public class TextRecognizer {
 
         StringBuilder sb = new StringBuilder();
 
+        int prevX = containers.get(0).getRect().x;
+        int prevY = containers.get(0).getRect().y;
+
+
         for (int i = 0; i < containerSize; i++) {
+            int currentY = containers.get(i).getRect().y;
+
+            if(Math.abs(currentY - prevY) > 10){
+                sb.append("\n");
+            }
+
+            prevY = currentY;
+
 
             Mat slice = containers.get(i).getMat();
             BufferedImage bufferedSlice = ImageProcessor.toBufferedImage(slice);
@@ -41,7 +54,7 @@ public class TextRecognizer {
             INDArray array = loader.asMatrix(bufferedSlice);
 
             Integer in = net.predict(array)[0];
-            sb.append(in).append(" ");
+            sb.append(in);
         }
 
         return sb.toString();
