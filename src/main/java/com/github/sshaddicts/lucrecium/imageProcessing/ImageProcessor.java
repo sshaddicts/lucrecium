@@ -243,7 +243,7 @@ public class ImageProcessor {
         chars = splitForThreshold(chars, meanHeight, false);
 
         log.debug("Contours size: " + contours.size());
-        Imshow.show(getOverlay(), "overlay");
+        
     }
 
     private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
