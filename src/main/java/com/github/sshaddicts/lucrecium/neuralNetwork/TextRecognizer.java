@@ -1,12 +1,10 @@
 package com.github.sshaddicts.lucrecium.neuralNetwork;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
-import jdk.nashorn.internal.runtime.regexp.joni.ast.StringNode;
 import org.datavec.image.loader.Java2DNativeImageLoader;
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -17,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TextRecognizer {
@@ -31,7 +30,9 @@ public class TextRecognizer {
 
 
     //TODO refactor
-    public ObjectNode getText(List<CharContainer> containers) throws IOException {
+    public List<ObjectNode> getText(List<CharContainer> containers) throws IOException {
+        List<ObjectNode> entries = new ArrayList<>();
+
         NativeImageLoader loader = new Java2DNativeImageLoader(32, 32, 1);
 
         int containerSize = containers.size();
@@ -43,9 +44,6 @@ public class TextRecognizer {
         int prevY = containers.get(0).getRect().y;
 
         final JsonNodeFactory factory = JsonNodeFactory.instance;
-        ObjectNode root = factory.objectNode();
-
-        ArrayNode entries = root.putArray("entries");
 
         for (int i = 0; i < containerSize; i++) {
             Rect rect = containers.get(i).getRect();
@@ -81,6 +79,6 @@ public class TextRecognizer {
         entries.add(entry);
 
         System.out.println(sb.toString());
-        return root;
+        return entries;
     }
 }
