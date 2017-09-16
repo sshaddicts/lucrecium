@@ -6,7 +6,7 @@
 
     <groupId>com.github.sshaddicts.lucrecium</groupId>
     <artifactId>lucrecium-core</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
 
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
@@ -54,7 +54,7 @@
 
                 <dependency>
                     <groupId>org.nd4j</groupId>
-                    <artifactId>nd4j-cuda-8.0-platform</artifactId>
+                    <artifactId>nd4j-native-platform</artifactId>
                     <version>${nd4j.version}</version>
                 </dependency>
 
