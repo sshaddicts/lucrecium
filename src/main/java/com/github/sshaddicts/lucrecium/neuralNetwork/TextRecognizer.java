@@ -1,6 +1,5 @@
 package com.github.sshaddicts.lucrecium.neuralNetwork;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +26,10 @@ public class TextRecognizer {
 
     public TextRecognizer(String filename) throws IOException {
         net = new RichNeuralNet(RichNeuralNet.loadNetwork(filename));
+    }
+
+    public TextRecognizer(InputStream is) throws IOException {
+        net = new RichNeuralNet(RichNeuralNet.loadnetwork(is));
     }
 
 

@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 
 public class RichNeuralNet {
@@ -132,5 +133,9 @@ public class RichNeuralNet {
 
     public static MultiLayerNetwork loadNetwork(String filename) throws IOException {
         return ModelSerializer.restoreMultiLayerNetwork(filename);
+    }
+
+    public static MultiLayerNetwork loadnetwork(InputStream is) throws IOException {
+        return ModelSerializer.restoreMultiLayerNetwork(is);
     }
 }

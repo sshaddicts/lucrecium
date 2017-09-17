@@ -30,6 +30,8 @@ public class ImageProcessor {
     public static final int MERGE_LINES = -20;
     public static final int NO_MERGE = 2;
 
+    public static final int RESIZE_THRESHOLD = 1000;
+
     private double resizeRate = 0.3;
     private boolean isRotationNeeded = false;
 
@@ -92,7 +94,7 @@ public class ImageProcessor {
             throw new IllegalArgumentException("Image size is illegal" + image.size().toString());
         }
 
-        if (image.height() < 500 || image.width() < 500) {
+        if (image.height() < RESIZE_THRESHOLD || image.width() < RESIZE_THRESHOLD) {
             resizeRate = 1;
         }
 
