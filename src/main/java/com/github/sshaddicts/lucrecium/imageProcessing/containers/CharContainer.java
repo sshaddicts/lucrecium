@@ -1,6 +1,5 @@
 package com.github.sshaddicts.lucrecium.imageProcessing.containers;
 
-import org.jetbrains.annotations.NotNull;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
@@ -22,7 +21,7 @@ public class CharContainer implements Comparable {
     }
 
     @Override
-    public int compareTo(@NotNull Object o) {
+    public int compareTo(Object o) {
         Rect comparable = ((CharContainer) o).getRect();
 
         if (Math.abs(comparable.y - rect.y) > 5) {
