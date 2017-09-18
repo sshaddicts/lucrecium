@@ -60,16 +60,16 @@ public class ImageProcessor {
         this.charsList = new ArrayList<>();
     }
 
-    public ImageProcessor(byte[] array, int width, int height) {
-        if (array.length == 0) {
+    public ImageProcessor(byte[] imageData, int width, int height) {
+        if (imageData.length == 0) {
             throw new IllegalArgumentException("Array can not be of length 0");
         }
         if (width == 0 || height == 0) {
             throw new IllegalArgumentException("Height or width is equal to 0. THIS IS INACCEPTIBLE");
         }
 
-        this.image = Mat.zeros(height, width, CvType.CV_8UC1);
-        this.image.put(0, 0, array);
+        MatOfByte byteWrap = new MatOfByte(imageData);
+        this.image = Imgcodecs.imdecode(byteWrap, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
         this.chars = new ArrayList<>();
     }
 
