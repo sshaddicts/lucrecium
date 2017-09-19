@@ -10,7 +10,6 @@ import org.opencv.core.Core
 import org.opencv.core.Mat
 import org.opencv.core.Rect
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 
@@ -18,10 +17,10 @@ object ImageProcessorSpec : Spek({
 
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
 
-    val testCaseDir = "testCase/";
-    val example = testCaseDir + "good.jpg";
-    val skewed = testCaseDir + "skew.jpg";
-    val lineSegm = testCaseDir + "lineNumber.png";
+    val testCaseDir = "testCase/"
+    val example = testCaseDir + "good.jpg"
+    val skewed = testCaseDir + "skew.jpg"
+    val lineSegm = testCaseDir + "lineNumber.png"
 
     describe("Rect") {
         it("should be possible to split rect") {
@@ -53,8 +52,8 @@ object ImageProcessorSpec : Spek({
 
             val result = deskew.invoke(processor, ImageProcessor.loadImage(skewed)) as Double
 
-            it("should work properly") {
-                assertFalse(result == 0.toDouble())
+            it("should not be equal to zero") {
+                assertTrue(result != .0)
             }
         }
 
@@ -80,7 +79,7 @@ object ImageProcessorSpec : Spek({
             lineNumberFor.isAccessible = true
             val result = lineNumberFor.invoke(processor, ImageProcessor.loadImage(lineSegm)) as Int
 
-            it("should work properly") {
+            it("should have approximately 3 lines") {
                 assertEquals(3, result)
             }
         }

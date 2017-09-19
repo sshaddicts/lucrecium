@@ -53,6 +53,10 @@ public class ImageProcessor {
         return Imgcodecs.imdecode(new MatOfByte(bytes), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
     }
 
+    public static Mat loadImage(byte[] bytes, int flags) {
+        return Imgcodecs.imdecode(new MatOfByte(bytes), flags);
+    }
+
     public static Mat loadImage(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
             throw new IllegalArgumentException("Filename cannot be null or empty. Requested filepath: " + filename);
@@ -362,14 +366,17 @@ public class ImageProcessor {
         return result;
     }
 
-    private Mat makeOverlay(Mat image, List<Rect> chars) {
+    private byte[] makeOverlay(Mat image, List<Rect> chars) {
         Mat imageClone = Mat.zeros(image.size(), 16);
         Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
         log.debug("debug image type is " + imageClone.type());
 
         drawRects(imageClone, chars, new Scalar(0, 128, 255));
 
-        return imageClone;
+        MatOfByte bytes = new MatOfByte();
+        Imgcodecs.imencode(".jpg", imageClone, bytes);
+
+        return bytes.toArray();
     }
 
     public void drawRects(Mat image, List<Rect> rects, Scalar color) {
