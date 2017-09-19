@@ -274,8 +274,6 @@ public class ImageProcessor {
         int meanHeight = calculateMean(chars, false);
 
         return splitForThreshold(chars, meanHeight, false);
-
-
     }
 
     private List<Rect> mergeInnerRects(Mat image, List<MatOfPoint> points, int mergeType) {
