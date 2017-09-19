@@ -50,7 +50,7 @@ public class ImageProcessor {
     }
 
     public static Mat loadImage(byte[] bytes) {
-        return Imgcodecs.imdecode(new MatOfByte(bytes), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+        return loadImage(bytes, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
     }
 
     public static Mat loadImage(byte[] bytes, int flags) {
