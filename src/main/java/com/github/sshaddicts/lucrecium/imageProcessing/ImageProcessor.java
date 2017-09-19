@@ -17,67 +17,59 @@ import java.util.*;
 
 public class ImageProcessor {
 
-    private Mat image;
-
-    private List<Rect> chars;
-    private List<CharContainer> charsList;
-
-    public List<CharContainer> getChars() {
-        return charsList;
-    }
-
     public static final int MERGE_WORDS = -5;
     public static final int MERGE_LINES = -20;
     public static final int NO_MERGE = 2;
 
-    public static final int RESIZE_THRESHOLD = 1000;
+    private static final int RESIZE_THRESHOLD = 1000;
 
     private double resizeRate = 0.3;
-    private boolean isRotationNeeded = false;
-
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public ImageProcessor(String filename) {
+    public static BufferedImage toBufferedImage(Mat image) {
+        return Imshow.toBufferedImage(image);
+    }
+
+    public static byte[] toByteArray(Mat src) {
+        byte[] byteData = new byte[src.height() * src.width() * src.channels()];
+        src.get(0, 0, byteData);
+        return byteData;
+    }
+
+    public static INDArray toNdarray(Mat mat) throws IOException {
+        byte[] matData = new byte[mat.width() * mat.height()];
+        double[] retData = new double[matData.length];
+
+        mat.get(0, 0, matData);
+
+        for (int i = 0; i < matData.length; i++) {
+            retData[i] = (double) matData[i];
+        }
+
+        return Nd4j.create(retData, new int[]{mat.width(), mat.height()});
+    }
+
+    public static Mat loadImage(byte[] bytes) {
+        return loadImage(bytes, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+    }
+
+    public static Mat loadImage(byte[] bytes, int flags) {
+        return Imgcodecs.imdecode(new MatOfByte(bytes), flags);
+    }
+
+    public static Mat loadImage(String filename) {
         if (filename == null || Objects.equals(filename, "")) {
             throw new IllegalArgumentException("Filename cannot be null or empty. Requested filepath: " + filename);
         }
 
-        this.image = Imgcodecs.imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-        if (image.height() == 0 || image.width() == 0)
+        Mat image = Imgcodecs.imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+
+        if (image.height() == 0 || image.width() == 0) {
             throw new IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = "
                     + image.height() + ", width = " + image.width() + ".\n" +
                     "Requested filepath: " + filename + ", check it once again.");
-        this.chars = new ArrayList<>();
-    }
-
-    public ImageProcessor(Mat mat) {
-        Objects.requireNonNull(mat);
-
-        if (mat.width() == 0 || mat.height() == 0) {
-            throw new IllegalArgumentException("mat cannot be null!");
-        }
-        this.image = mat;
-        this.charsList = new ArrayList<>();
-    }
-
-    public ImageProcessor(byte[] imageData, int width, int height) {
-        if (imageData.length == 0) {
-            throw new IllegalArgumentException("Array can not be of length 0");
-        }
-        if (width == 0 || height == 0) {
-            throw new IllegalArgumentException("Height or width is equal to 0. THIS IS INACCEPTIBLE");
         }
 
-        MatOfByte byteWrap = new MatOfByte(imageData);
-        this.image = Imgcodecs.imdecode(byteWrap, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-        this.chars = new ArrayList<>();
-    }
-
-    public void needsRotation(boolean needsRotation) {
-        this.isRotationNeeded = needsRotation;
-    }
-
-    public Mat getImage() {
         return image;
     }
 
@@ -89,7 +81,7 @@ public class ImageProcessor {
         return mask;
     }
 
-    private void resize() {
+    private Mat resize(Mat image) {
         if (image.height() == 0 || image.width() == 0) {
             throw new IllegalArgumentException("Image size is illegal" + image.size().toString());
         }
@@ -104,10 +96,10 @@ public class ImageProcessor {
         double width = image.width() * resizeRate;
 
         Imgproc.resize(image, tempMat, new Size(width, height), 2, 2, Imgproc.INTER_AREA);
-        image = tempMat;
+        return tempMat;
     }
 
-    private Mat cropImage() {
+    private Mat cropImage(Mat image) {
         Mat tmpImage = thresholdImage(image);
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -144,41 +136,65 @@ public class ImageProcessor {
         return result;
     }
 
-    public List<CharContainer> findTextRegions(int mergeType) {
-        detectText(mergeType);
-
-        return constructCharRegions();
+    public SearchResult findTextRegions(String filename) {
+        return findTextRegions(filename, ImageProcessor.NO_MERGE, false);
     }
 
-    public List<CharContainer> constructCharRegions() {
-        charsList = new ArrayList<>();
+    public SearchResult findTextRegions(String filename, int mergeType, boolean isRotationNeeded) {
+        return findTextRegions(ImageProcessor.loadImage(filename), mergeType, isRotationNeeded);
+    }
 
-        for (int i = 0; i < chars.size(); i++) {
-            Rect rect = chars.get(i);
+    public SearchResult findTextRegions(Mat image) {
+        return findTextRegions(image, ImageProcessor.NO_MERGE, false);
+    }
+
+    public SearchResult findTextRegions(Mat image, int mergeType, boolean isRotationNeeded) {
+        List<Rect> chars = detectText(image, mergeType, isRotationNeeded);
+
+        return constructCharRegions(image, chars);
+    }
+
+    public SearchResult findTextRegions(byte[] bytes) {
+        return findTextRegions(bytes, ImageProcessor.NO_MERGE, false);
+    }
+
+    public SearchResult findTextRegions(byte[] bytes, int mergeType, boolean isRotationNeeded) {
+        return findTextRegions(ImageProcessor.loadImage(bytes), mergeType, isRotationNeeded);
+    }
+
+    public SearchResult constructCharRegions(Mat image, List<Rect> chars) {
+        ArrayList<CharContainer> charsList = new ArrayList<>(chars.size());
+
+        for (Rect rect : chars) {
             charsList.add(new CharContainer(image.submat(rect), rect));
         }
 
         Collections.sort(charsList);
 
-        return charsList;
+        return new SearchResult(charsList, makeOverlay(image, chars));
     }
 
-    private Mat deskew(Mat src, double angle) {
+    private void deskew(Mat src, double angle) {
         Point center = new Point(src.width() / 2, src.height() / 2);
         Mat rotatedImage = Imgproc.getRotationMatrix2D(center, angle, 1.0);
 
         Size size = new Size(src.width(), src.height());
         Imgproc.warpAffine(src, src, rotatedImage, size,
                 Imgproc.INTER_LINEAR + Imgproc.CV_WARP_FILL_OUTLIERS);
-        return src;
     }
 
     private double deskew(Mat src) {
         Mat tmpMat = src.clone();
-        Imgproc.adaptiveThreshold(tmpMat, tmpMat, 255,
+
+        Imgproc.adaptiveThreshold(
+                tmpMat,
+                tmpMat,
+                255,
                 Imgproc.ADAPTIVE_THRESH_MEAN_C,
                 Imgproc.THRESH_BINARY_INV,
-                21, 22);
+                21,
+                22
+        );
 
         Mat pointMat = Mat.zeros(tmpMat.size(), tmpMat.channels());
         Core.findNonZero(tmpMat, pointMat);
@@ -193,41 +209,46 @@ public class ImageProcessor {
 
         log.debug("Rotation angle: " + rotated.angle + " degrees.");
 
-        src = deskew(src, rotated.angle);
+        deskew(src, rotated.angle);
 
         return rotated.angle;
     }
 
-    private void process() {
+    private Mat process(Mat image, boolean isRotationNeeded) {
         if (isRotationNeeded) {
             deskew(image);
         }
 
-        resize();
-
+        image = resize(image);
         image = adjustContrast(image, 5, -780);
         image = thresholdImage(image);
 
-        image = cropImage();
+        image = cropImage(image);
         log.debug("Image size is " + image.size());
+
+        return image;
     }
 
-    private void detectText(int mergeType) {
-        process();
+    private List<Rect> detectText(Mat image, int mergeType, boolean isRotationNeeded) {
 
-        List<MatOfPoint> contours = new ArrayList<>();
+        Mat processed = process(image, isRotationNeeded);
+
+        List<MatOfPoint> contours = new LinkedList<>();
         Mat hiech = new Mat();
 
-        Imgproc.findContours(image, contours, hiech,
+        Imgproc.findContours(
+                processed,
+                contours,
+                hiech,
                 Imgproc.RETR_TREE,
-                Imgproc.CHAIN_APPROX_NONE);
+                Imgproc.CHAIN_APPROX_NONE
+        );
 
-
-        if (image.height() > 500) {
+        if (processed.height() > 500) {
             for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext(); ) {
                 MatOfPoint cont = it.next();
 
-                if (image.height() - cont.height() < 200) {
+                if (processed.height() - cont.height() < 200) {
                     it.remove();
                 }
             }
@@ -241,7 +262,7 @@ public class ImageProcessor {
             }
         }
 
-        chars = mergeInnerRects(contours, mergeType);
+        List<Rect> chars = mergeInnerRects(image, contours, mergeType);
 
         for (Iterator<Rect> rectIterator = chars.iterator(); rectIterator.hasNext(); ) {
             Rect current = rectIterator.next();
@@ -252,15 +273,14 @@ public class ImageProcessor {
 
         Collections.reverse(chars);
 
-
-        int meanHeight = calculateMean(chars, false);
-        chars = splitForThreshold(chars, meanHeight, false);
-
         log.debug("Contours size: " + contours.size());
 
+        int meanHeight = calculateMean(chars, false);
+
+        return splitForThreshold(chars, meanHeight, false);
     }
 
-    private List<Rect> mergeInnerRects(List<MatOfPoint> points, int mergeType) {
+    private List<Rect> mergeInnerRects(Mat image, List<MatOfPoint> points, int mergeType) {
         List<Rect> result = new ArrayList<>();
         Mat mask = Mat.zeros(image.size(), image.type());
 
@@ -271,9 +291,12 @@ public class ImageProcessor {
         }
 
         List<MatOfPoint> contours = new ArrayList<>();
-        Imgproc.findContours(mask, contours, new Mat(),
+        Imgproc.findContours(
+                mask, contours,
+                new Mat(),
                 Imgproc.RETR_LIST,
-                Imgproc.CHAIN_APPROX_SIMPLE);
+                Imgproc.CHAIN_APPROX_SIMPLE
+        );
 
         for (MatOfPoint contour : contours) {
             result.add(Imgproc.boundingRect(contour));
@@ -318,29 +341,6 @@ public class ImageProcessor {
         return result;
     }
 
-    public static BufferedImage toBufferedImage(Mat image) {
-        return Imshow.toBufferedImage(image);
-    }
-
-    public static byte[] toByteArray(Mat src) {
-        byte[] byteData = new byte[src.height() * src.width() * src.channels()];
-        src.get(0, 0, byteData);
-        return byteData;
-    }
-
-    public static INDArray toNdarray(Mat mat) throws IOException {
-        byte[] matData = new byte[mat.width() * mat.height()];
-        double[] retData = new double[matData.length];
-
-        mat.get(0, 0, matData);
-
-        for (int i = 0; i < matData.length; i++) {
-            retData[i] = (double) matData[i];
-        }
-
-        return Nd4j.create(retData, new int[]{mat.width(), mat.height()});
-    }
-
     private int calculateMean(List<Rect> rects, boolean horizontal) {
         int total = 0;
 
@@ -352,10 +352,9 @@ public class ImageProcessor {
     }
 
     private List<Rect> splitForThreshold(List<Rect> rects, int mean, boolean horizontal) {
-        List<Rect> result = new ArrayList<>();
+        List<Rect> result = new ArrayList<>(rects.size());
 
-        for (int i = 0; i < rects.size(); i++) {
-            Rect rect = rects.get(i);
+        for (Rect rect : rects) {
             if (rect.height > mean * 2) {
                 List<Rect> split = RectManipulator.split(rect, (int) Math.floor(rect.height / mean), horizontal);
                 result.addAll(split);
@@ -367,14 +366,17 @@ public class ImageProcessor {
         return result;
     }
 
-    public Mat getOverlay() {
+    private byte[] makeOverlay(Mat image, List<Rect> chars) {
         Mat imageClone = Mat.zeros(image.size(), 16);
         Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB);
         log.debug("debug image type is " + imageClone.type());
 
         drawRects(imageClone, chars, new Scalar(0, 128, 255));
 
-        return imageClone;
+        MatOfByte bytes = new MatOfByte();
+        Imgcodecs.imencode(".jpg", imageClone, bytes);
+
+        return bytes.toArray();
     }
 
     public void drawRects(Mat image, List<Rect> rects, Scalar color) {

@@ -1,6 +1,6 @@
 package com.github.sshaddicts.lucrecium.neuralNetwork;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor;
 import com.github.sshaddicts.lucrecium.imageProcessing.containers.CharContainer;
@@ -24,6 +24,8 @@ public class TextRecognizer {
 
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
+    private ObjectMapper mapper = new ObjectMapper();
+
     public TextRecognizer(String filename) throws IOException {
         net = new RichNeuralNet(RichNeuralNet.loadNetwork(filename));
     }
@@ -34,35 +36,29 @@ public class TextRecognizer {
 
 
     //TODO refactor
-    public List<ObjectNode> getText(List<CharContainer> containers) throws IOException {
-        List<ObjectNode> entries = new ArrayList<>();
+    public List<ObjectNode> recognize(List<CharContainer> containers) throws IOException {
+        List<ObjectNode> entries = new ArrayList<>(containers.size());
 
         NativeImageLoader loader = new Java2DNativeImageLoader(32, 32, 1);
 
-        int containerSize = containers.size();
-
-        log.debug("container size " + containerSize);
+        log.debug("container size " + containers.size());
 
         StringBuilder sb = new StringBuilder();
 
         int prevY = containers.get(0).getRect().y;
 
-        final JsonNodeFactory factory = JsonNodeFactory.instance;
-
-        for (int i = 0; i < containerSize; i++) {
+        for (int i = 0; i < containers.size(); i++) {
             Rect rect = containers.get(i).getRect();
 
             int currentY = rect.y;
 
             //the line ends at this condition
             if (Math.abs(currentY - prevY) > 10) {
-                ObjectNode entry = factory.objectNode();
-
-                double v = Double.parseDouble(sb.toString());
-                entry.put("entry_" + i, v);
-
-                entries.add(entry);
-                sb.delete(0, sb.length());
+                entries.add((ObjectNode) mapper.valueToTree(new Occurrence(
+                        "entry_" + i,
+                        Double.parseDouble(sb.toString())
+                )));
+                sb.setLength(0);
             }
 
             prevY = currentY;
@@ -76,13 +72,11 @@ public class TextRecognizer {
             sb.append(in);
         }
 
-        ObjectNode entry = factory.objectNode();
+        entries.add((ObjectNode) mapper.valueToTree(new Occurrence(
+                "last_entry",
+                Double.parseDouble(sb.toString())
+        )));
 
-        double v = Double.parseDouble(sb.toString());
-        entry.put("last_entry", v);
-        entries.add(entry);
-
-        System.out.println(sb.toString());
         return entries;
     }
 }
