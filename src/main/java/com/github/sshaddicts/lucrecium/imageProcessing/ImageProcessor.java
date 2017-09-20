@@ -149,9 +149,11 @@ public class ImageProcessor {
     }
 
     public SearchResult findTextRegions(Mat image, int mergeType, boolean isRotationNeeded) {
-        List<Rect> chars = detectText(image, mergeType, isRotationNeeded);
+        Mat processed = process(image, isRotationNeeded);
 
-        return constructCharRegions(image, chars);
+        List<Rect> chars = detectText(processed, mergeType, isRotationNeeded);
+
+        return constructCharRegions(processed, chars);
     }
 
     public SearchResult findTextRegions(byte[] bytes) {
@@ -214,7 +216,7 @@ public class ImageProcessor {
         return rotated.angle;
     }
 
-    private Mat process(Mat image, boolean isRotationNeeded) {
+    public Mat process(Mat image, boolean isRotationNeeded) {
         if (isRotationNeeded) {
             deskew(image);
         }
@@ -229,9 +231,8 @@ public class ImageProcessor {
         return image;
     }
 
-    private List<Rect> detectText(Mat image, int mergeType, boolean isRotationNeeded) {
+    private List<Rect> detectText(Mat processed, int mergeType, boolean isRotationNeeded) {
 
-        Mat processed = process(image, isRotationNeeded);
 
         List<MatOfPoint> contours = new LinkedList<>();
         Mat hiech = new Mat();
@@ -262,7 +263,7 @@ public class ImageProcessor {
             }
         }
 
-        List<Rect> chars = mergeInnerRects(image, contours, mergeType);
+        List<Rect> chars = mergeInnerRects(processed, contours, mergeType);
 
         for (Iterator<Rect> rectIterator = chars.iterator(); rectIterator.hasNext(); ) {
             Rect current = rectIterator.next();
