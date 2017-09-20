@@ -1,7 +1,8 @@
 package imageprocessing
 
 import com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor
-import com.github.sshaddicts.lucrecium.util.RectManipulator
+import com.github.sshaddicts.lucrecium.util.plus
+import com.github.sshaddicts.lucrecium.util.split
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
@@ -28,7 +29,7 @@ object ImageProcessorSpec : Spek({
             val rect = Rect(0, 0, image.width(), image.height())
 
             val mean = 22
-            val split = RectManipulator.split(rect, rect.height / mean, false)
+            val split = rect.split(rect.height / mean, false)
 
             assertTrue(split.size == 3)
         }
@@ -37,7 +38,7 @@ object ImageProcessorSpec : Spek({
             val rect1 = Rect(0, 0, 25, 25)
             val rect2 = Rect(25, 25, 25, 25)
 
-            val merged = RectManipulator.merge(rect1, rect2, 0)
+            val merged = rect1 + rect2
 
             assertEquals(50, merged.width)
         }
@@ -63,7 +64,7 @@ object ImageProcessorSpec : Spek({
 
             it("should return the result that contains letters") {
                 assertTrue(
-                        result.chars.size > 0,
+                        result.chars.isNotEmpty(),
                         "mat.size() is ${result.chars.size}, but should never be"
                 )
             }
