@@ -6,7 +6,9 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.opencv.core.*
 import org.opencv.imgcodecs.Imgcodecs
+import org.opencv.imgcodecs.Imgcodecs.*
 import org.opencv.imgproc.Imgproc
+import org.opencv.imgproc.Imgproc.*
 import org.slf4j.LoggerFactory
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -17,6 +19,14 @@ class ImageProcessor {
 
     private var resizeRate = 0.3
     private val log = LoggerFactory.getLogger(this.javaClass)
+
+    private fun Mat.findContours(mode: Int, method: Int): List<MatOfPoint> {
+        val contours = LinkedList<MatOfPoint>()
+
+        Imgproc.findContours(this, contours, Mat(), mode, method)
+
+        return contours
+    }
 
     private fun Mat.threshold(): Mat {
         val mask = Mat(this.height(), this.width(), this.type())
@@ -46,11 +56,8 @@ class ImageProcessor {
 
     private fun Mat.crop(): Mat {
         val tmpImage = this.threshold()
-        val contours = ArrayList<MatOfPoint>()
-        val hierarchy = Mat()
 
-        Imgproc.findContours(tmpImage, contours, hierarchy,
-                Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
+        val contours = tmpImage.findContours(RETR_LIST, CHAIN_APPROX_SIMPLE)
 
         var result = Mat()
 
@@ -160,15 +167,7 @@ class ImageProcessor {
 
     private fun detectText(processed: Mat, mergeType: Int, isRotationNeeded: Boolean): List<Rect> {
 
-        val contours: List<MatOfPoint> = LinkedList()
-
-        Imgproc.findContours(
-                processed,
-                contours,
-                Mat(),
-                Imgproc.RETR_TREE,
-                Imgproc.CHAIN_APPROX_NONE
-        )
+        val contours = processed.findContours(RETR_TREE, CHAIN_APPROX_NONE)
 
         val filteredContours = if (processed.height() > 500) {
             contours.filter { processed.height() - it.height() >= 200 && it.size().area() <= 7 }
@@ -191,18 +190,12 @@ class ImageProcessor {
         for (point in points) {
             val rect = Imgproc.boundingRect(point)
             rect.width -= mergeType
-            Imgproc.rectangle(mask, rect.tl(), rect.br(), Scalar(255.0), -10)
+            rectangle(mask, rect.tl(), rect.br(), Scalar(255.0), -10)
         }
 
-        val contours = ArrayList<MatOfPoint>()
-        Imgproc.findContours(
-                mask, contours,
-                Mat(),
-                Imgproc.RETR_LIST,
-                Imgproc.CHAIN_APPROX_SIMPLE
-        )
-
-        val result = contours.map { Imgproc.boundingRect(it) }
+        val result = mask
+                .findContours(RETR_LIST, CHAIN_APPROX_SIMPLE)
+                .map { Imgproc.boundingRect(it) }
 
         log.debug("ROI number after merging inner rects: " + result.size)
 
@@ -268,19 +261,19 @@ class ImageProcessor {
 
     private fun makeOverlay(image: Mat, chars: List<Rect>): ByteArray {
         val imageClone = Mat.zeros(image.size(), 16)
-        Imgproc.cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB)
+        cvtColor(image, imageClone, Imgproc.COLOR_GRAY2RGB)
         log.debug("debug image type is " + imageClone.type())
 
         drawRects(imageClone, chars, Scalar(0.0, 128.0, 255.0))
 
         val bytes = MatOfByte()
-        Imgcodecs.imencode(".jpg", imageClone, bytes)
+        imencode(".jpg", imageClone, bytes)
 
         return bytes.toArray()
     }
 
     fun drawRects(image: Mat, rects: List<Rect>, color: Scalar) =
-            rects.forEach { rect -> Imgproc.rectangle(image, rect.tl(), rect.br(), color, 1) }
+            rects.forEach { rect -> rectangle(image, rect.tl(), rect.br(), color, 1) }
 
 
     fun drawContours(image: Mat, contours: List<MatOfPoint>, color: Scalar) =
@@ -294,9 +287,7 @@ class ImageProcessor {
 
         private val RESIZE_THRESHOLD = 1000
 
-        fun toBufferedImage(image: Mat): BufferedImage {
-            return Imshow.toBufferedImage(image)
-        }
+        fun toBufferedImage(image: Mat): BufferedImage = Imshow.toBufferedImage(image)
 
         fun toByteArray(src: Mat): ByteArray {
             val byteData = ByteArray(src.height() * src.width() * src.channels())
@@ -320,7 +311,7 @@ class ImageProcessor {
 
         @JvmOverloads
         fun loadImage(bytes: ByteArray, flags: Int = Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE): Mat {
-            return Imgcodecs.imdecode(MatOfByte(*bytes), flags)
+            return imdecode(MatOfByte(*bytes), flags)
         }
 
         fun loadImage(filename: String?): Mat {
@@ -328,7 +319,7 @@ class ImageProcessor {
                 throw IllegalArgumentException("Filename cannot be null or empty. Requested filepath: " + filename!!)
             }
 
-            val image = Imgcodecs.imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE)
+            val image = imread(filename, CV_LOAD_IMAGE_GRAYSCALE)
 
             if (image.height() == 0 || image.width() == 0) {
                 throw IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = "
