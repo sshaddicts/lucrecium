@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>RichNeuralNet - lucrecium-core</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">lucrecium-core</a>&nbsp;/&nbsp;<a href="../index.html">com.github.sshaddicts.lucrecium.neuralNetwork</a>&nbsp;/&nbsp;<a href=".">RichNeuralNet</a><br/>
+<br/>
+<h1>RichNeuralNet</h1>
+<code><span class="keyword">class </span><span class="identifier">RichNeuralNet</span></code> <a href="https://github.com/sshaddicts/lucrecium/tree/master/src/main/java/com/github/sshaddicts/lucrecium/neuralNetwork/RichNeuralNet.kt#L24">(source)</a>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">RichNeuralNet</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$<init>(org.deeplearning4j.nn.multilayer.MultiLayerNetwork)/net">net</span><span class="symbol">:</span>&nbsp;<span class="identifier">MultiLayerNetwork</span><span class="symbol">)</span></code><br/>
+<code><span class="identifier">RichNeuralNet</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$<init>(kotlin.Int)/outputLabelCount">outputLabelCount</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="stats.html">stats</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">stats</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="eval.html">eval</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">eval</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$eval(org.nd4j.linalg.api.ndarray.INDArray, org.nd4j.linalg.api.ndarray.INDArray)/input">input</span><span class="symbol">:</span>&nbsp;<span class="identifier">INDArray</span><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$eval(org.nd4j.linalg.api.ndarray.INDArray, org.nd4j.linalg.api.ndarray.INDArray)/actual">actual</span><span class="symbol">:</span>&nbsp;<span class="identifier">INDArray</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="predict.html">predict</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">predict</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$predict(org.nd4j.linalg.api.ndarray.INDArray)/data">data</span><span class="symbol">:</span>&nbsp;<span class="identifier">INDArray</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int-array/index.html"><span class="identifier">IntArray</span></a><span class="symbol">?</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="save-network.html">saveNetwork</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">saveNetwork</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$saveNetwork(kotlin.String)/filename">filename</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="train.html">train</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">train</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$train(org.nd4j.linalg.dataset.api.iterator.DataSetIterator)/data">data</span><span class="symbol">:</span>&nbsp;<span class="identifier">DataSetIterator</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code><br/>
+<code><span class="keyword">fun </span><span class="identifier">train</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet$train(org.nd4j.linalg.api.ndarray.INDArray)/data">data</span><span class="symbol">:</span>&nbsp;<span class="identifier">INDArray</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="load-network.html">loadNetwork</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">loadNetwork</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet.Companion$loadNetwork(kotlin.String)/filename">filename</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">MultiLayerNetwork</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="loadnetwork.html">loadnetwork</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">loadnetwork</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.neuralNetwork.RichNeuralNet.Companion$loadnetwork(java.io.InputStream)/is">is</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/io/InputStream.html"><span class="identifier">InputStream</span></a><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">MultiLayerNetwork</span></code></td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

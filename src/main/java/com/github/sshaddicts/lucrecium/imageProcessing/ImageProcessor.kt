@@ -15,6 +15,12 @@ import java.io.IOException
 import java.util.*
 
 
+/**
+ * This class is intended to processing Images
+ *
+ * @author Alexey Shereshovets
+ * @see
+ */
 class ImageProcessor {
 
     private var resizeRate = 0.3
@@ -88,11 +94,17 @@ class ImageProcessor {
         return result
     }
 
+    /**
+     * Main method of [ImageProcessor]. Processed image from a given filepath.
+     */
     @JvmOverloads
     fun findTextRegions(filename: String, mergeType: Int = ImageProcessor.NO_MERGE, isRotationNeeded: Boolean = false): SearchResult {
         return findTextRegions(ImageProcessor.loadImage(filename), mergeType, isRotationNeeded)
     }
 
+    /**
+     * Main method of [ImageProcessor]. Processed image from a given [Mat].
+     */
     @JvmOverloads
     fun findTextRegions(image: Mat, mergeType: Int = ImageProcessor.NO_MERGE, isRotationNeeded: Boolean = false): SearchResult {
         val processed = process(image, isRotationNeeded)
@@ -102,6 +114,9 @@ class ImageProcessor {
         return constructCharRegions(processed, chars)
     }
 
+    /**
+     * Main method of [ImageProcessor]. Processed image from a given [ByteArray].
+     */
     @JvmOverloads
     fun findTextRegions(bytes: ByteArray, mergeType: Int = ImageProcessor.NO_MERGE, isRotationNeeded: Boolean = false): SearchResult {
         return findTextRegions(ImageProcessor.loadImage(bytes), mergeType, isRotationNeeded)
@@ -167,25 +182,25 @@ class ImageProcessor {
 
     private fun detectText(processed: Mat, mergeType: Int, isRotationNeeded: Boolean): List<Rect> {
 
-        val contours = processed.findContours(RETR_TREE, CHAIN_APPROX_NONE)
+        val contours = processed.findContours(RETR_TREE, CHAIN_APPROX_NONE).toMutableList()
 
-        val filteredContours = if (processed.height() > 500) {
-            contours.filter { processed.height() - it.height() >= 200 && it.size().area() <= 7 }
-        } else {
-            contours.filter { it.size().area() >= 7 }
+        if (processed.height() > 500) {
+            contours.removeIf { processed.height() - it.height() < 200 }
         }
 
-        val chars = mergeInnerRects(processed, filteredContours, mergeType)
-                .filter { it.width >= 5 && it.height >= 5 }
-                .reversed()
+        contours.removeIf { it.size().area() < 7 }
 
-        log.debug("Contours size: " + filteredContours.size)
+        val chars = processed.mergeInnerRects(contours, mergeType).toMutableList()
+        chars.removeIf { it.width < 5 || it.height < 5 }
+        chars.reverse()
 
-        return splitForThreshold(chars, calculateMean(chars, false), false)
+        log.debug("Contours size: " + contours.size)
+
+        return chars
     }
 
-    private fun mergeInnerRects(image: Mat, points: List<MatOfPoint>, mergeType: Int): List<Rect> {
-        val mask = Mat.zeros(image.size(), image.type())
+    private fun Mat.mergeInnerRects(points: List<MatOfPoint>, mergeType: Int): List<Rect> {
+        val mask = Mat.zeros(this.size(), this.type())
 
         for (point in points) {
             val rect = Imgproc.boundingRect(point)

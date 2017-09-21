@@ -1,0 +1,11 @@
+$dokka.format:html
+$dokka.linkExtension:html
+$dokka.location:com.github.sshaddicts.lucrecium.util$center#org.opencv.core.Rectcom.github.sshaddicts.lucrecium.util/org.opencv.core.-rect/center.html
+$dokka.location:com.github.sshaddicts.lucrecium.util$merge(org.opencv.core.Rect, org.opencv.core.Rect, kotlin.Int)com.github.sshaddicts.lucrecium.util/org.opencv.core.-rect/merge.html
+$dokka.location:com.github.sshaddicts.lucrecium.util$plus(org.opencv.core.Rect, org.opencv.core.Rect)com.github.sshaddicts.lucrecium.util/org.opencv.core.-rect/plus.html
+$dokka.location:com.github.sshaddicts.lucrecium.util$split(org.opencv.core.Rect, kotlin.Int, kotlin.Boolean)com.github.sshaddicts.lucrecium.util/org.opencv.core.-rect/split.html
+com.github.sshaddicts.lucrecium.datasets
+com.github.sshaddicts.lucrecium.imageProcessing
+com.github.sshaddicts.lucrecium.imageProcessing.containers
+com.github.sshaddicts.lucrecium.neuralNetwork
+com.github.sshaddicts.lucrecium.util

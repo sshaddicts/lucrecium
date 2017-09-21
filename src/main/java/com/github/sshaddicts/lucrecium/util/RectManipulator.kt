@@ -3,6 +3,9 @@ package com.github.sshaddicts.lucrecium.util
 import org.opencv.core.Point
 import org.opencv.core.Rect
 
+/**
+ * Splits rect horizontally or vertically into number of [slices]
+ */
 fun Rect.split(slices: Int, horizontal: Boolean) = if (horizontal) {
     val singleSliceWidth = this.width / slices
 
@@ -13,6 +16,9 @@ fun Rect.split(slices: Int, horizontal: Boolean) = if (horizontal) {
     (1 until slices + 1).map { Rect(Point(this.x.toDouble(), (this.y + singleSliceHeight * (it - 1)).toDouble()), Point((this.x + this.width).toDouble(), (this.y + singleSliceHeight * it).toDouble())) }
 }
 
+/**
+ * Center [Point] of the [Rect]
+ */
 val Rect.center: Point
     get() = Point((this.tl().x + this.br().x) / 2, (this.tl().y + this.br().y) / 2)
 
