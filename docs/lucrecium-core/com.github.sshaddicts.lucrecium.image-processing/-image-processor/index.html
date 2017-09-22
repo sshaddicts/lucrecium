@@ -1,0 +1,143 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>ImageProcessor - lucrecium-core</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">lucrecium-core</a>&nbsp;/&nbsp;<a href="../index.html">com.github.sshaddicts.lucrecium.imageProcessing</a>&nbsp;/&nbsp;<a href=".">ImageProcessor</a><br/>
+<br/>
+<h1>ImageProcessor</h1>
+<code><span class="keyword">class </span><span class="identifier">ImageProcessor</span></code> <a href="https://github.com/sshaddicts/lucrecium/tree/master/src/main/java/com/github/sshaddicts/lucrecium/imageProcessing/ImageProcessor.kt#L24">(source)</a>
+<p>This class is intended to processing Images</p>
+<p><strong>Author</strong><br/>
+Alexey Shereshovets</p>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">ImageProcessor</span><span class="symbol">(</span><span class="symbol">)</span></code>
+<p>This class is intended to processing Images</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="approximate-line-number-for.html">approximateLineNumberFor</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">approximateLineNumberFor</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$approximateLineNumberFor(org.opencv.core.Mat)/m">m</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="construct-char-regions.html">constructCharRegions</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">constructCharRegions</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$constructCharRegions(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.Rect)))/image">image</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$constructCharRegions(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.Rect)))/chars">chars</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Rect.html"><span class="identifier">Rect</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-search-result/index.html"><span class="identifier">SearchResult</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="draw-contours.html">drawContours</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">drawContours</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$drawContours(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.MatOfPoint)), org.opencv.core.Scalar)/image">image</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$drawContours(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.MatOfPoint)), org.opencv.core.Scalar)/contours">contours</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/MatOfPoint.html"><span class="identifier">MatOfPoint</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$drawContours(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.MatOfPoint)), org.opencv.core.Scalar)/color">color</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Scalar.html"><span class="identifier">Scalar</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="draw-rects.html">drawRects</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">drawRects</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$drawRects(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.Rect)), org.opencv.core.Scalar)/image">image</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$drawRects(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.Rect)), org.opencv.core.Scalar)/rects">rects</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Rect.html"><span class="identifier">Rect</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$drawRects(org.opencv.core.Mat, kotlin.collections.List((org.opencv.core.Rect)), org.opencv.core.Scalar)/color">color</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Scalar.html"><span class="identifier">Scalar</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="find-text-regions.html">findTextRegions</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">findTextRegions</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(kotlin.String, kotlin.Int, kotlin.Boolean)/filename">filename</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(kotlin.String, kotlin.Int, kotlin.Boolean)/mergeType">mergeType</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ImageProcessor.NO_MERGE<span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(kotlin.String, kotlin.Int, kotlin.Boolean)/isRotationNeeded">isRotationNeeded</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span><span class="symbol">: </span><a href="../-search-result/index.html"><span class="identifier">SearchResult</span></a></code>
+<p>Main method of ImageProcessor. Processed image from a given filepath.</p>
+<code><span class="keyword">fun </span><span class="identifier">findTextRegions</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(org.opencv.core.Mat, kotlin.Int, kotlin.Boolean)/image">image</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(org.opencv.core.Mat, kotlin.Int, kotlin.Boolean)/mergeType">mergeType</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ImageProcessor.NO_MERGE<span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(org.opencv.core.Mat, kotlin.Int, kotlin.Boolean)/isRotationNeeded">isRotationNeeded</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span><span class="symbol">: </span><a href="../-search-result/index.html"><span class="identifier">SearchResult</span></a></code>
+<p>Main method of ImageProcessor. Processed image from a given <a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html">Mat</a>.</p>
+<code><span class="keyword">fun </span><span class="identifier">findTextRegions</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(kotlin.ByteArray, kotlin.Int, kotlin.Boolean)/bytes">bytes</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(kotlin.ByteArray, kotlin.Int, kotlin.Boolean)/mergeType">mergeType</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;ImageProcessor.NO_MERGE<span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$findTextRegions(kotlin.ByteArray, kotlin.Int, kotlin.Boolean)/isRotationNeeded">isRotationNeeded</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span><span class="symbol">: </span><a href="../-search-result/index.html"><span class="identifier">SearchResult</span></a></code>
+<p>Main method of ImageProcessor. Processed image from a given <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="process.html">process</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">process</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$process(org.opencv.core.Mat, kotlin.Boolean)/image">image</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor$process(org.opencv.core.Mat, kotlin.Boolean)/isRotationNeeded">isRotationNeeded</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-m-e-r-g-e_-l-i-n-e-s.html">MERGE_LINES</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">MERGE_LINES</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="-m-e-r-g-e_-w-o-r-d-s.html">MERGE_WORDS</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">MERGE_WORDS</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="-n-o_-m-e-r-g-e.html">NO_MERGE</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">NO_MERGE</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="load-image.html">loadImage</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">loadImage</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor.Companion$loadImage(kotlin.ByteArray, kotlin.Int)/bytes">bytes</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a><span class="symbol">, </span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor.Companion$loadImage(kotlin.ByteArray, kotlin.Int)/flags">flags</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE<span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a></code><br/>
+<code><span class="keyword">fun </span><span class="identifier">loadImage</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor.Companion$loadImage(kotlin.String)/filename">filename</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="to-buffered-image.html">toBufferedImage</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toBufferedImage</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor.Companion$toBufferedImage(org.opencv.core.Mat)/image">image</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/6/docs/api/java/awt/image/BufferedImage.html"><span class="identifier">BufferedImage</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="to-byte-array.html">toByteArray</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toByteArray</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor.Companion$toByteArray(org.opencv.core.Mat)/src">src</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="to-ndarray.html">toNdarray</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toNdarray</span><span class="symbol">(</span><span class="identifier" id="com.github.sshaddicts.lucrecium.imageProcessing.ImageProcessor.Companion$toNdarray(org.opencv.core.Mat)/mat">mat</span><span class="symbol">:</span>&nbsp;<a href="http://docs.opencv.org/java/3.1.0/org/opencv/core/Mat.html"><span class="identifier">Mat</span></a><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">INDArray</span></code></td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>
