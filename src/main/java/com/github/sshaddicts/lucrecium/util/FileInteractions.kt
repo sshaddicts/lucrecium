@@ -8,7 +8,8 @@ import java.io.File
 import java.util.*
 
 
-object FileInteractions {
+class FileInteractions {
+    companion object {
 
     private val log = LoggerFactory.getLogger(FileInteractions::class.java)
 
@@ -44,5 +45,6 @@ object FileInteractions {
 
     fun saveMatWithName(mat: Mat, directory: String, filename: String) {
         Imgcodecs.imwrite(directory + "/" + directory + "_" + filename + ".png", mat)
+    }
     }
 }

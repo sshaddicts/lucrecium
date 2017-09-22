@@ -34,15 +34,23 @@ class ImageProcessor {
         return contours
     }
 
-    private fun Mat.threshold(): Mat {
+    public fun Mat.threshold(): Mat {
         val mask = Mat(this.height(), this.width(), this.type())
-        Imgproc.threshold(this, mask, 20.0, 255.0,
+        Imgproc.threshold(this, mask, 0.0, 255.0,
                 Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU)
 
         return mask
     }
 
-    private fun Mat.resize(): Mat {
+    public fun Mat.adaptiveThreshold(): Mat{
+        val mask = Mat(this.size(), this.type())
+        Imgproc.adaptiveThreshold(this, mask, 255.0,
+                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY_INV,
+                21,22.0)
+        return mask
+    }
+
+    public fun Mat.resize(): Mat {
         if (this.height() == 0 || this.width() == 0) {
             throw IllegalArgumentException("Image size is illegal" + this.size().toString())
         }
@@ -60,7 +68,7 @@ class ImageProcessor {
         return tempMat
     }
 
-    private fun Mat.crop(): Mat {
+    public fun Mat.crop(): Mat {
         val tmpImage = this.threshold()
 
         val contours = tmpImage.findContours(RETR_LIST, CHAIN_APPROX_SIMPLE)
@@ -87,7 +95,7 @@ class ImageProcessor {
         return this
     }
 
-    private fun Mat.adjustContrast(alpha: Double, beta: Double): Mat {
+    public fun Mat.adjustContrast(alpha: Double, beta: Double): Mat {
         val result = Mat.zeros(this.size(), this.type())
         this.convertTo(result, -1, alpha, beta)
 
@@ -167,13 +175,14 @@ class ImageProcessor {
         return rotated.angle
     }
 
-    fun process(image: Mat, isRotationNeeded: Boolean): Mat {
+    public fun process(image: Mat, isRotationNeeded: Boolean): Mat {
 
         if (isRotationNeeded) {
             deskew(image)
         }
 
-        val result = image.resize().adjustContrast(5.0, -780.0).threshold().crop()
+        val result = image.resize().adjustContrast(5.0, -780.0).adaptiveThreshold()
+        val end = result.crop()
 
         log.debug("Image size is " + result.size())
 
@@ -188,10 +197,10 @@ class ImageProcessor {
             contours.removeIf { processed.height() - it.height() < 200 }
         }
 
-        contours.removeIf { it.size().area() < 7 }
+        contours.removeIf { it.size().area() < 6 }
 
         val chars = processed.mergeInnerRects(contours, mergeType).toMutableList()
-        chars.removeIf { it.width < 5 || it.height < 5 }
+        chars.removeIf { it.width < 4 || it.height < 4 }
         chars.reverse()
 
         log.debug("Contours size: " + contours.size)
@@ -334,7 +343,7 @@ class ImageProcessor {
                 throw IllegalArgumentException("Filename cannot be null or empty. Requested filepath: " + filename!!)
             }
 
-            val image = imread(filename, CV_LOAD_IMAGE_GRAYSCALE)
+            val image = imread(filename, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE)
 
             if (image.height() == 0 || image.width() == 0) {
                 throw IllegalArgumentException("Image has to be at least 1x1. current dimensions: height = "

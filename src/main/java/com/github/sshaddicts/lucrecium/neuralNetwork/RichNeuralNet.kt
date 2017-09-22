@@ -11,6 +11,7 @@ import org.deeplearning4j.nn.conf.layers.OutputLayer
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
+import org.deeplearning4j.ui.stats.StatsListener
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.api.ndarray.INDArray
@@ -23,14 +24,13 @@ import java.io.InputStream
 
 class RichNeuralNet {
     private val ITERATIONS = 10
-    private val LEARNING_RATE = 0.009
+    private val LEARNING_RATE = 0.01
 
-    private val REGULARIZATION = true
-    private val L2REGULARIZATION = 0.005
+    private val HAS_REGULARIZATION = true
+    private val L2REGULARIZATION = 0.04
     private val SEED = 123
 
     private val eval = Evaluation()
-
     private var iterationNumber = 0
 
     private var net: MultiLayerNetwork? = null
@@ -49,14 +49,13 @@ class RichNeuralNet {
         val conf = NeuralNetConfiguration.Builder()
                 .seed(SEED)
                 .iterations(ITERATIONS)
-                .regularization(true).l2(0.0005)
+                .regularization(HAS_REGULARIZATION).l2(L2REGULARIZATION)
                 .learningRate(LEARNING_RATE).biasLearningRate(0.02)
                 .weightInit(WeightInit.XAVIER)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .updater(Updater.NESTEROVS) //To configure: .updater(new Nesterovs(0.9))
+                .updater(Updater.ADAM)
                 .list()
                 .layer(0, ConvolutionLayer.Builder(9, 9)
-                        //nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
                         .nIn(1)
                         .stride(1, 1)
                         .nOut(20)
@@ -67,7 +66,6 @@ class RichNeuralNet {
                         .stride(2, 2)
                         .build())
                 .layer(2, ConvolutionLayer.Builder(3, 3)
-                        //Note that nIn need not be specified in later layers
                         .stride(1, 1)
                         .nOut(50)
                         .activation(Activation.RELU)
@@ -86,6 +84,10 @@ class RichNeuralNet {
                 .build()
 
         return MultiLayerNetwork(conf)
+    }
+
+    fun setListener(listener: StatsListener){
+        net!!.setListeners(listener)
     }
 
     fun train(data: DataSetIterator) {
