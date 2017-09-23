@@ -41,10 +41,10 @@ class RichNeuralNet {
     }
 
     constructor(outputLabelCount: Int) {
-        this.net = initLenetMnist(outputLabelCount)
+        this.net = init(outputLabelCount)
     }
 
-    private fun initLenetMnist(outputLabelCount: Int): MultiLayerNetwork {
+    private fun init(outputLabelCount: Int): MultiLayerNetwork {
         val conf = NeuralNetConfiguration.Builder()
                 .seed(SEED)
                 .iterations(ITERATIONS)
@@ -54,19 +54,19 @@ class RichNeuralNet {
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .updater(Updater.ADAM)
                 .list()
-                .layer(0, ConvolutionLayer.Builder(9, 9)
+                .layer(0, ConvolutionLayer.Builder(5,5)
                         .nIn(1)
                         .stride(1, 1)
-                        .nOut(20)
+                        .nOut(10)
                         .activation(Activation.RELU)
                         .build())
                 .layer(1, SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
                         .kernelSize(2, 2)
                         .stride(2, 2)
                         .build())
-                .layer(2, ConvolutionLayer.Builder(3, 3)
+                .layer(2, ConvolutionLayer.Builder(5, 5)
                         .stride(1, 1)
-                        .nOut(50)
+                        .nOut(10)
                         .activation(Activation.RELU)
                         .build())
                 .layer(3, SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
@@ -74,7 +74,7 @@ class RichNeuralNet {
                         .stride(2, 2)
                         .build())
                 .layer(4, DenseLayer.Builder().activation(Activation.RELU)
-                        .nOut(500).build())
+                        .nOut(300).build())
                 .layer(5, OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
                         .nOut(outputLabelCount)
                         .activation(Activation.SOFTMAX)

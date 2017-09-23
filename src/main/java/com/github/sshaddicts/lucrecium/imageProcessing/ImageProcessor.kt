@@ -34,7 +34,7 @@ class ImageProcessor {
         return contours
     }
 
-    public fun Mat.threshold(): Mat {
+    fun Mat.threshold(): Mat {
         val mask = Mat(this.height(), this.width(), this.type())
         Imgproc.threshold(this, mask, 0.0, 255.0,
                 Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU)
@@ -42,7 +42,7 @@ class ImageProcessor {
         return mask
     }
 
-    public fun Mat.adaptiveThreshold(): Mat{
+    fun Mat.adaptiveThreshold(): Mat{
         val mask = Mat(this.size(), this.type())
         Imgproc.adaptiveThreshold(this, mask, 255.0,
                 Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY_INV,
@@ -50,7 +50,7 @@ class ImageProcessor {
         return mask
     }
 
-    public fun Mat.resize(): Mat {
+    fun Mat.resize(): Mat {
         if (this.height() == 0 || this.width() == 0) {
             throw IllegalArgumentException("Image size is illegal" + this.size().toString())
         }
@@ -68,7 +68,7 @@ class ImageProcessor {
         return tempMat
     }
 
-    public fun Mat.crop(): Mat {
+    fun Mat.crop(): Mat {
         val tmpImage = this.threshold()
 
         val contours = tmpImage.findContours(RETR_LIST, CHAIN_APPROX_SIMPLE)
@@ -95,7 +95,7 @@ class ImageProcessor {
         return this
     }
 
-    public fun Mat.adjustContrast(alpha: Double, beta: Double): Mat {
+    fun Mat.adjustContrast(alpha: Double, beta: Double): Mat {
         val result = Mat.zeros(this.size(), this.type())
         this.convertTo(result, -1, alpha, beta)
 
@@ -130,9 +130,21 @@ class ImageProcessor {
         return findTextRegions(ImageProcessor.loadImage(bytes), mergeType, isRotationNeeded)
     }
 
-    fun constructCharRegions(image: Mat, chars: List<Rect>) = SearchResult(chars.map {
-        CharContainer(image.submat(it), it)
-    }.sorted(), makeOverlay(image, chars))
+    fun constructCharRegions(image: Mat, chars: List<Rect>):SearchResult {
+
+        val charMap = chars.map {
+            CharContainer(image.submat(it), it)
+        }
+        var sorted : List<CharContainer> = charMap
+        try {
+            sorted = charMap.sorted()
+            SearchResult(sorted, makeOverlay(image, chars))
+        } catch (e: Throwable) {
+            log.error(e.message)
+        }
+
+        return SearchResult(sorted, makeOverlay(image, chars))
+    }
 
 
     private fun deskew(src: Mat, angle: Double) {
@@ -175,7 +187,7 @@ class ImageProcessor {
         return rotated.angle
     }
 
-    public fun process(image: Mat, isRotationNeeded: Boolean): Mat {
+    fun process(image: Mat, isRotationNeeded: Boolean): Mat {
 
         if (isRotationNeeded) {
             deskew(image)

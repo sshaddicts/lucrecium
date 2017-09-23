@@ -19,6 +19,7 @@ class TextRecognizer {
     private val log = LoggerFactory.getLogger(this.javaClass)
 
     private val mapper = ObjectMapper().registerKotlinModule()
+    val regex = "((?:\\d\\s?){3,5})\\s".toRegex()
 
     @Throws(IOException::class)
     constructor(filename: String) {
@@ -45,7 +46,7 @@ class TextRecognizer {
         var prevXWidth = containers[0].rect.width
         var prevY = containers[0].rect.y
 
-        val regex = "((?:\\d\\s?){3,5})\\s".toRegex()
+        var rejected = 0;
 
         var prev:String = ""
 
@@ -64,25 +65,22 @@ class TextRecognizer {
 
                 val row = sb.toString().trim()
 
-                val find = regex.find(row)
-                if(find == null){
+                val regexResult = regex.find(row)
+                if(regexResult == null){
                     prev+=row
                 }else {
-                    val value =find.groupValues[0]
+                    val value =regexResult.groupValues[0]
                     val result = fixValue(value)
 
-                    val name = row.subSequence(0, find.groups[0]!!.range.start) as String
+                    val name = row.subSequence(0, regexResult.groups[0]!!.range.start) as String
 
                     entries.add(mapper.valueToTree<JsonNode>(Occurrence(
                             name.toLowerCase(),
                             result
                     )) as ObjectNode)
                     sb.setLength(0)
+                    rejected++
                 }
-            }
-
-            if(sb.length > 70){
-                sb.setLength(0)
             }
 
             prevY = currentY
@@ -96,6 +94,11 @@ class TextRecognizer {
             val `in` = labels.get(net.predict(array)!![0])
             sb.append(`in`)
         }
+
+        entries.add(mapper.valueToTree<JsonNode>(Occurrence(
+                            "this is how many i rejected)))",
+                            rejected.toDouble()
+                    )) as ObjectNode)
 
         return entries
     }
