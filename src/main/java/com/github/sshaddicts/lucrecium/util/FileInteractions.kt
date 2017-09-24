@@ -11,7 +11,6 @@ import java.util.*
 class FileInteractions {
     companion object {
 
-    private val log = LoggerFactory.getLogger(FileInteractions::class.java)
 
     fun saveMats(list: List<Mat>, directory: String) {
         for (mat in list) {

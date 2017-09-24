@@ -52,7 +52,7 @@ class ImageProcessor {
 
     fun Mat.resize(): Mat {
         if (this.height() == 0 || this.width() == 0) {
-            throw IllegalArgumentException("Image size is illegal" + this.size().toString())
+            throw IllegalArgumentException("Image size is illegal" + this.size().toString()) as Throwable
         }
 
         if (this.height() < RESIZE_THRESHOLD || this.width() < RESIZE_THRESHOLD) {
@@ -193,9 +193,7 @@ class ImageProcessor {
             deskew(image)
         }
 
-        val result = image.resize().adjustContrast(5.0, -780.0).adaptiveThreshold()
-        val end = result.crop()
-
+        val result = image.resize().adjustContrast(5.0, -780.0).adaptiveThreshold().crop()
         log.debug("Image size is " + result.size())
 
         return result

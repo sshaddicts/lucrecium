@@ -83,6 +83,10 @@ class TextRecognizer {
                 }
             }
 
+            if(sb.length > 80){
+                sb.setLength(0)
+            }
+
             prevY = currentY
             prevX = currentX
             prevXWidth = rect.width
@@ -94,11 +98,6 @@ class TextRecognizer {
             val `in` = labels.get(net.predict(array)!![0])
             sb.append(`in`)
         }
-
-        entries.add(mapper.valueToTree<JsonNode>(Occurrence(
-                            "this is how many i rejected)))",
-                            rejected.toDouble()
-                    )) as ObjectNode)
 
         return entries
     }
